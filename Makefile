@@ -9,10 +9,10 @@ LDIR=lib
 
 LIBS=-lm -lglfw -lGLEW -lfreetype -lGL -lpng -lz
 
-_DEPS = camera.h common.h core.h gim.h graphics_math.h graphics.h util.h
+_DEPS = camera.h common.h core.h domain_transform.h filter.h gim.h graphics_math.h graphics.h util.h
 DEPS = $(patsubst %,$(SRCDIR)/%,$(_DEPS))
 
-_OBJ = camera.o core.o gim.o graphics_math.o graphics.o main.o util.o
+_OBJ = camera.o core.o domain_transform.o filter.o gim.o graphics_math.o graphics.o main.o util.o
 OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(DEPS)

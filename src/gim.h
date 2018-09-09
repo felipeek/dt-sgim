@@ -10,6 +10,7 @@ struct GeometryImage
 	FloatImageData img;
 	Vertex* vertices; // Vertices have the same order as the img
 	u32* indexes;
+	Vec4* normals;
 };
 
 extern GeometryImage gimParseGeometryImageFile(const u8* path);

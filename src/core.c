@@ -1,7 +1,6 @@
 #include <GLFW/glfw3.h>
 #include "core.h"
-#include "graphics.h"
-#include "gim.h"
+#include "filter.h"
 
 #define PHONG_VERTEX_SHADER_PATH "./shaders/phong_shader.vs"
 #define PHONG_FRAGMENT_SHADER_PATH "./shaders/phong_shader.fs"
@@ -87,23 +86,83 @@ extern void coreInputProcess(boolean* keyState, r32 deltaTime)
 		cameraSetPosition(&camera, gmAddVec4(camera.position, gmScalarProductVec4(-movementSpeed * deltaTime, gmNormalizeVec4(camera.xAxis))));
 	if (keyState[GLFW_KEY_D])
 		cameraSetPosition(&camera, gmAddVec4(camera.position, gmScalarProductVec4(movementSpeed * deltaTime, gmNormalizeVec4(camera.xAxis))));
+	if (keyState[GLFW_KEY_X])
+		{
+			if (keyState[GLFW_KEY_LEFT_SHIFT] || keyState[GLFW_KEY_RIGHT_SHIFT])
+			{
+				Vec3 rotation = gimEntity.worldRotation;
+				rotation.x -= rotationSpeed * deltaTime;
+				graphicsEntitySetRotation(&gimEntity, rotation);
+			}
+			else
+			{
+				Vec3 rotation = gimEntity.worldRotation;
+				rotation.x += rotationSpeed * deltaTime;
+				graphicsEntitySetRotation(&gimEntity, rotation);
+			}
+		}
+		if (keyState[GLFW_KEY_Y])
+		{
+			if (keyState[GLFW_KEY_LEFT_SHIFT] || keyState[GLFW_KEY_RIGHT_SHIFT])
+			{
+				Vec3 rotation = gimEntity.worldRotation;
+				rotation.y += rotationSpeed * deltaTime;
+				graphicsEntitySetRotation(&gimEntity, rotation);
+			}
+			else
+			{
+				Vec3 rotation = gimEntity.worldRotation;
+				rotation.y -= rotationSpeed * deltaTime;
+				graphicsEntitySetRotation(&gimEntity, rotation);
+			}
+		}
+		if (keyState[GLFW_KEY_Z])
+		{
+			if (keyState[GLFW_KEY_LEFT_SHIFT] || keyState[GLFW_KEY_RIGHT_SHIFT])
+			{
+				Vec3 rotation = gimEntity.worldRotation;
+				rotation.z += rotationSpeed * deltaTime;
+				graphicsEntitySetRotation(&gimEntity, rotation);
+			}
+			else
+			{
+				Vec3 rotation = gimEntity.worldRotation;
+				rotation.z -= rotationSpeed * deltaTime;
+				graphicsEntitySetRotation(&gimEntity, rotation);
+			}
+}
+	if (keyState[GLFW_KEY_F])
+	{
+		gim = filterGeometryImageFilter(&gim, 10, 0.99f, 1.0f, CURVATURE_FILTER);
+		gimGeometryImageUpdate3D(&gim);
+		Mesh m = gimGeometryImageToMesh(&gim, (Vec4) {0.0f, 0.0f, 1.0f, 1.0f});
+		graphicsEntityMeshReplace(&gimEntity, m, false, false);
+		keyState[GLFW_KEY_F] = false;
+	}
 }
 
 extern void coreMouseChangeProcess(r64 xPos, r64 yPos)
 {
+	static boolean resetOldPosition = true;
+
 	static r64 xPosOld, yPosOld;
 	// This constant is basically the mouse sensibility.
 	// @TODO: Allow mouse sensibility to be configurable.
 	static const r32 cameraMouseSpeed = 0.001f;
 
-	r64 xDifference = xPos - xPosOld;
-	r64 yDifference = yPos - yPosOld;
+	if (!resetOldPosition)
+	{
+		r64 xDifference = xPos - xPosOld;
+		r64 yDifference = yPos - yPosOld;
 
-	r32 pitchAngle = -cameraMouseSpeed * (float)xDifference;
-	r32 yawAngle = cameraMouseSpeed * (float)yDifference;
+		r32 pitchAngle = -cameraMouseSpeed * (float)xDifference;
+		r32 yawAngle = cameraMouseSpeed * (float)yDifference;
 
-	cameraIncPitch(&camera, pitchAngle);
-	cameraIncYaw(&camera, yawAngle);
+		cameraIncPitch(&camera, pitchAngle);
+		cameraIncYaw(&camera, yawAngle);
+	}
+	else
+		resetOldPosition = false;
 
 	xPosOld = xPos;
 	yPosOld = yPos;

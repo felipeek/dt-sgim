@@ -3,6 +3,7 @@
 #include "float.h"
 #include <stdio.h>
 
+// Parses a .gim file into a GeometryImage
 extern GeometryImage gimParseGeometryImageFile(const u8* path)
 {
 	FILE* file = fopen(path, "rb");
@@ -33,6 +34,7 @@ extern void gimGeometryImageUpdate3D(GeometryImage* gim)
 	// Create arrays
 	gim->vertices = array_create(Vertex, 1);
 	gim->indexes = array_create(u32, 1);
+	gim->normals = malloc(sizeof(Vec4) * gim->img.width * gim->img.height);
 
 	// Initializes vertexMap with -1
 	for (s32 i = 0; i < gim->img.width * gim->img.height; ++i)
@@ -148,6 +150,11 @@ extern void gimGeometryImageUpdate3D(GeometryImage* gim)
 	size_t verticesLength = array_get_length(gim->vertices);
 	for (s32 i = 0; i < verticesLength; ++i)
 		gim->vertices[i].normal = gmNormalizeVec4(gim->vertices[i].normal);
+
+	// Fill gim's normals
+	for (s32 i = 0; i < gim->img.height; ++i)
+		for (s32 j = 0; j < gim->img.width; ++j)
+			gim->normals[i * gim->img.width + j] = gim->vertices[vertexMap[i * gim->img.width + j]].normal;
 
 	// Free vertexMap
 	free(vertexMap);
@@ -285,4 +292,6 @@ extern void gimFreeGeometryImage(GeometryImage* gim)
 		array_release(gim->indexes);
 	if (gim->vertices)
 		array_release(gim->vertices);
+	if (gim->normals)
+		free(gim->normals);
 }
