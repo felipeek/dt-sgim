@@ -39,7 +39,7 @@ struct DiffuseInfoStruct
 struct MeshStruct
 {
 	u32 VAO, VBO, EBO;
-	s32 indicesSize;
+	s32 indexesSize;
 	NormalMappingInfo normalInfo;
 	DiffuseInfo diffuseInfo;
 };

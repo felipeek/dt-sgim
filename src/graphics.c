@@ -1,37 +1,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "graphics.h"
+#include "util.h"
 #include <GL/glew.h>
 #include <stb_image.h>
 #include <stb_image_write.h>
-
-static s8* fileRead(const s8* path, s32* _fileLength)
-{
-	FILE* file;
-	s8* buffer;
-	s32 fileLength;
-
-	file = fopen(path, "rb");
-	fseek(file, 0, SEEK_END);
-	fileLength = ftell(file);
-	rewind(file);
-
-	buffer = (s8*)malloc((fileLength + 1) * sizeof(s8));
-	fread(buffer, fileLength, 1, file);
-	fclose(file);
-
-	buffer[fileLength] = '\0';
-
-	if (_fileLength)
-		*_fileLength = fileLength;
-
-	return buffer;
-}
-
-static void fileFree(s8* file)
-{
-	free(file);
-}
 
 extern ImageData graphicsImageLoad(const s8* imagePath)
 {
@@ -98,8 +71,8 @@ extern void graphicsFloatImageSave(const s8* imagePath, const FloatImageData* im
 
 extern Shader graphicsShaderCreate(const s8* vertexShaderPath, const s8* fragmentShaderPath)
 {
-	s8* vertexShaderCode = fileRead(vertexShaderPath, 0);
-	s8* fragmentShaderCode = fileRead(fragmentShaderPath, 0);
+	s8* vertexShaderCode = utilReadFile(vertexShaderPath, 0);
+	s8* fragmentShaderCode = utilReadFile(fragmentShaderPath, 0);
 
 	GLint success;
 	GLchar infoLogBuffer[1024];
@@ -143,8 +116,8 @@ extern Shader graphicsShaderCreate(const s8* vertexShaderPath, const s8* fragmen
 }
 
 // Vertices must be Vertex[4]
-// Indices must be u32[6]
-static void fillQuadVerticesAndIndices(r32 size, Vertex* vertices, u32* indices)
+// Indexes must be u32[6]
+static void fillQuadVerticesAndIndexes(r32 size, Vertex* vertices, u32* indices)
 {
 	vertices[0].position = (Vec4) { 0.0f, 0.0f, 0.0f, 1.0f };
 	vertices[0].normal = (Vec4) { 0.0f, 0.0f, 1.0f, 0.0f };
@@ -176,7 +149,7 @@ extern Mesh graphicsQuadCreateWithTexture(u32 texture)
 	Vertex vertices[4];
 	u32 indices[6];
 
-	fillQuadVerticesAndIndices(size, vertices, indices);
+	fillQuadVerticesAndIndexes(size, vertices, indices);
 
 	return graphicsMeshCreateWithTexture(vertices, sizeof(vertices) / sizeof(Vertex), indices,
 		sizeof(indices) / sizeof(u32), 0, texture);
@@ -188,7 +161,7 @@ extern Mesh graphicsQuadCreateWithColor(Vec4 color)
 	Vertex vertices[4];
 	u32 indices[6];
 
-	fillQuadVerticesAndIndices(size, vertices, indices);
+	fillQuadVerticesAndIndexes(size, vertices, indices);
 
 	return graphicsMeshCreateWithColor(vertices, sizeof(vertices) / sizeof(Vertex), indices,
 		sizeof(indices) / sizeof(u32), 0, color);
@@ -229,7 +202,7 @@ static Mesh createSimpleMesh(Vertex* vertices, s32 verticesSize, u32* indices, s
 	mesh.VAO = VAO;
 	mesh.VBO = VBO;
 	mesh.EBO = EBO;
-	mesh.indicesSize = indicesSize;
+	mesh.indexesSize = indicesSize;
 
 	if (!normalInfo)
 	{
@@ -344,7 +317,7 @@ static boolean isR32SuitableCharacter(s8 c)
 extern Mesh graphicsMeshCreateFromObj(const s8* objPath)
 {
 	s32 index = 0, objLen;
-	s8* obj = fileRead(objPath, &objLen);
+	s8* obj = utilReadFile(objPath, &objLen);
 	s32 num_vertices = 0, num_indices = 0;
 
 	while (index < objLen)
@@ -475,7 +448,7 @@ extern Mesh graphicsMeshCreateFromObj(const s8* objPath)
 	Mesh mesh = graphicsMeshCreateWithColor(vertices, num_vertices, indices, num_indices, 0, color);
 	free(vertices);
 	free(indices);
-	fileFree(obj);
+	utilFreeFile(obj);
 	return mesh;
 }
 
@@ -485,7 +458,7 @@ extern void graphicsMeshRender(Shader shader, Mesh mesh)
 	glUseProgram(shader);
 	diffuseUpdateUniforms(&mesh.diffuseInfo, shader);
 	normalsUpdateUniforms(&mesh.normalInfo, shader);
-	glDrawElements(GL_TRIANGLES, mesh.indicesSize, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, mesh.indexesSize, GL_UNSIGNED_INT, 0);
 	glUseProgram(0);
 	glBindVertexArray(0);
 }

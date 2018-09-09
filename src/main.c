@@ -9,7 +9,6 @@ s32 windowHeight = 768;
 GLFWwindow* mainWindow;
 
 static boolean keyState[1024];	// @TODO: Check range.
-static r32 deltaTime;
 
 static void glfwKeyCallback(GLFWwindow* window, s32 key, s32 scanCode, s32 action, s32 mods)
 {
@@ -75,11 +74,12 @@ static void initGlew()
 
 extern s32 main(s32 argc, s8** argv)
 {
-	srand((u32)time(0));
+    r32 deltaTime = 0.0f;
+
 	mainWindow = initGlfw();
 	initGlew();
 
-	coreInit();
+	coreInit(argv[1]);
 
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

@@ -1,27 +1,62 @@
 #include <GLFW/glfw3.h>
 #include "core.h"
 #include "graphics.h"
+#include "gim.h"
 
-Entity testEntity;
-Shader phongShader;
-PerspectiveCamera camera;
-Light light;
+#define PHONG_VERTEX_SHADER_PATH "./shaders/phong_shader.vs"
+#define PHONG_FRAGMENT_SHADER_PATH "./shaders/phong_shader.fs"
 
-extern void coreInit()
+static GeometryImage gim;
+static Entity gimEntity;
+static Shader phongShader;
+static PerspectiveCamera camera;
+static Light light;
+
+static PerspectiveCamera createCamera()
 {
-	phongShader = graphicsShaderCreate("./shaders/phong_shader.vs", "./shaders/phong_shader.fs");
-	cameraInit(&camera, (Vec4){0.0f, 0.0f, 1.0f, 1.0f}, (Vec4){0.0f, 1.0f, 0.0f, 0.0f}, (Vec4){0.0f, 0.0f, -1.0f, 0.0f},
-		-0.01f, -1000.0f, 45.0f);
-	Mesh m = graphicsMeshCreateFromObj("./res/bunny.obj");
-	graphicsEntityCreate(&testEntity, m, (Vec4){0.0f, 0.0f, 0.0f, 1.0f}, (Vec3){0.0f, 0.0f, 0.0f}, (Vec3){1.0f, 1.0f, 1.0f});
+	PerspectiveCamera camera;
+	Vec4 cameraPosition = (Vec4) {0.0f, 0.0f, 2.0f, 1.0f};
+	Vec4 cameraUp = (Vec4) {0.0f, 1.0f, 0.0f, 1.0f};
+	Vec4 cameraView = (Vec4) {0.0f, 0.0f, -1.0f, 0.0f};
+	r32 cameraNearPlane = -0.01f;
+	r32 cameraFarPlane = -1000.0f;
+	r32 cameraFov = 45.0f;
+	cameraInit(&camera, cameraPosition, cameraUp, cameraView, cameraNearPlane, cameraFarPlane, cameraFov);
+	return camera;
+}
 
-	graphicsLightCreate(&light, (Vec4){1.0f, 0.0f, 0.0f, 1.0f}, (Vec4){0.4f, 0.4f, 0.4f, 1.0f},
-		(Vec4){1.0f, 1.0f, 1.0f, 1.0f}, (Vec4){1.0f, 1.0f, 1.0f, 1.0f});
+static Light createLight()
+{
+	Light light;
+	Vec4 lightPosition = (Vec4) {1.0f, 0.0f, 0.0f, 1.0f};
+	Vec4 ambientColor = (Vec4) {0.4f, 0.4f, 0.4f, 1.0f};
+	Vec4 diffuseColor = (Vec4) {1.0f, 1.0f, 1.0f, 1.0f};
+	Vec4 specularColor = (Vec4) {1.0f, 1.0f, 1.0f, 1.0f};
+	graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
+	return light;
+}
+
+extern void coreInit(s8* gimPath)
+{
+	// Create shader
+	phongShader = graphicsShaderCreate(PHONG_VERTEX_SHADER_PATH, PHONG_FRAGMENT_SHADER_PATH);
+	// Create camera
+	camera = createCamera();
+	// Load geometry image	
+	gim = gimParseGeometryImageFile(gimPath);
+	// Update geometry image 3d properties
+	gimGeometryImageUpdate3D(&gim);
+	// Transform geometry image to a mesh
+	Mesh m = gimGeometryImageToMesh(&gim, (Vec4) {0.0f, 0.0f, 1.0f, 1.0f});
+	// Create gim's entity
+	graphicsEntityCreate(&gimEntity, m, (Vec4){0.0f, 0.0f, 0.0f, 1.0f}, (Vec3){0.0f, 0.0f, 0.0f}, (Vec3){1.0f, 1.0f, 1.0f});
+	// Create light
+	light = createLight();
 }
 
 extern void coreDestroy()
 {
-
+	gimFreeGeometryImage(&gim);
 }
 
 extern void coreUpdate(r32 deltaTime)
@@ -31,12 +66,12 @@ extern void coreUpdate(r32 deltaTime)
 
 extern void coreRender()
 {
-	graphicsEntityRenderPhongShader(phongShader, &camera, &testEntity, &light);
+	graphicsEntityRenderPhongShader(phongShader, &camera, &gimEntity, &light);
 }
 
 extern void coreInputProcess(boolean* keyState, r32 deltaTime)
 {
-	r32 movementSpeed = 12.0f;
+	r32 movementSpeed = 3.0f;
 	r32 rotationSpeed = 3.0f;
 
 	if (keyState[GLFW_KEY_LEFT_SHIFT])

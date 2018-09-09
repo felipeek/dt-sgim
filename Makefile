@@ -1,6 +1,6 @@
 IDIR=include
 CC=gcc
-CFLAGS=-I$(IDIR)
+CFLAGS=-I$(IDIR) -g
 
 SRCDIR=src
 OUTDIR=bin
@@ -9,10 +9,10 @@ LDIR=lib
 
 LIBS=-lm -lglfw -lGLEW -lfreetype -lGL -lpng -lz
 
-_DEPS = camera.h common.h core.h graphics_math.h graphics.h 
+_DEPS = camera.h common.h core.h gim.h graphics_math.h graphics.h util.h
 DEPS = $(patsubst %,$(SRCDIR)/%,$(_DEPS))
 
-_OBJ = camera.o core.o graphics_math.o graphics.o main.o
+_OBJ = camera.o core.o gim.o graphics_math.o graphics.o main.o util.o
 OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(DEPS)
@@ -26,4 +26,4 @@ gimmesh: $(OBJ)
 .PHONY: clean
 
 clean:
-	rm -f $(OUTDIR)
+	rm -r $(OUTDIR)
