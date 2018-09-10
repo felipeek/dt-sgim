@@ -142,7 +142,7 @@ static r32 fillDomainTransform(
 
 // This function will calculate both horizontal and vertical domain transforms of geometry image 'gim'
 // filterMode tells which method should be used to calculate the transforms
-extern DomainTransform dtFillDomainTransforms(
+extern DomainTransform dtGenerateDomainTransforms(
 	const GeometryImage* gim,
 	FilterMode filterMode,
 	r32 spatialFactor,
@@ -296,4 +296,46 @@ extern DomainTransform dtFillDomainTransforms(
         }
 
 	return domainTransform;
+}
+
+extern void dtDeleteDomainTransforms(DomainTransform dt)
+{
+	free(dt.vertical);
+	free(dt.horizontal);
+}
+
+extern FloatImageData dtGenerateCurvatureImage(
+	const GeometryImage* gim,
+	r32 spatialFactor,
+	r32 rangeFactor)
+{
+	DomainTransform domainTransform = dtGenerateDomainTransforms(gim, CURVATURE_FILTER, spatialFactor, rangeFactor);
+
+	// Alloc texture
+	FloatImageData curvatureImage;
+	curvatureImage.data = malloc(sizeof(r32) * gim->img.width * gim->img.height * 3);
+	curvatureImage.channels = 3;
+	curvatureImage.height = gim->img.height;
+	curvatureImage.width = gim->img.width;
+
+	// Fill texture
+	for (s32 i = 0; i < gim->img.height; ++i)
+		for (s32 j = 0; j < gim->img.width; ++j)
+		{
+			// h is just the horizontal curvature
+			r32 h = domainTransform.horizontal[i * gim->img.width + j];
+			// v is just the vertical curvature
+			r32 v = domainTransform.vertical[i * gim->img.width + j];
+			// average is the average of horizontal and vertical curvatures
+			r32 average = (h + v) / 2.0f;
+
+			// Fill texture's pixel using desired value
+			curvatureImage.data[i * curvatureImage.width * curvatureImage.channels + j * curvatureImage.channels] = average;
+			curvatureImage.data[i * curvatureImage.width * curvatureImage.channels + j * curvatureImage.channels + 1] = average;
+			curvatureImage.data[i * curvatureImage.width * curvatureImage.channels + j * curvatureImage.channels + 2] = average;
+	}
+
+	dtDeleteDomainTransforms(domainTransform);
+
+	return curvatureImage;
 }

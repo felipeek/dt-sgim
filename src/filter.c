@@ -907,7 +907,7 @@ extern GeometryImage filterGeometryImageFilter(
 
 	// Calculate domain transforms
 	printf("Calculating domain transforms...\n");
-	DomainTransform domainTransform = dtFillDomainTransforms(originalGim, filterMode, spatialFactor, rangeFactor);
+	DomainTransform domainTransform = dtGenerateDomainTransforms(originalGim, filterMode, spatialFactor, rangeFactor);
 
 	/* ************************ */
 	printf("Calculating RF feedback coefficients...\n");
@@ -935,6 +935,7 @@ extern GeometryImage filterGeometryImageFilter(
 	}
 
 	free(rfCoefficients);
+	dtDeleteDomainTransforms(domainTransform);
 	
 	return filteredGim;
 }

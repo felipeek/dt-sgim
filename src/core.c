@@ -1,6 +1,7 @@
 #include <GLFW/glfw3.h>
 #include "core.h"
 #include "filter.h"
+#include "domain_transform.h"
 
 #define PHONG_VERTEX_SHADER_PATH "./shaders/phong_shader.vs"
 #define PHONG_FRAGMENT_SHADER_PATH "./shaders/phong_shader.fs"
@@ -87,57 +88,71 @@ extern void coreInputProcess(boolean* keyState, r32 deltaTime)
 	if (keyState[GLFW_KEY_D])
 		cameraSetPosition(&camera, gmAddVec4(camera.position, gmScalarProductVec4(movementSpeed * deltaTime, gmNormalizeVec4(camera.xAxis))));
 	if (keyState[GLFW_KEY_X])
+	{
+		if (keyState[GLFW_KEY_LEFT_SHIFT] || keyState[GLFW_KEY_RIGHT_SHIFT])
 		{
-			if (keyState[GLFW_KEY_LEFT_SHIFT] || keyState[GLFW_KEY_RIGHT_SHIFT])
-			{
-				Vec3 rotation = gimEntity.worldRotation;
-				rotation.x -= rotationSpeed * deltaTime;
-				graphicsEntitySetRotation(&gimEntity, rotation);
-			}
-			else
-			{
-				Vec3 rotation = gimEntity.worldRotation;
-				rotation.x += rotationSpeed * deltaTime;
-				graphicsEntitySetRotation(&gimEntity, rotation);
-			}
+			Vec3 rotation = gimEntity.worldRotation;
+			rotation.x -= rotationSpeed * deltaTime;
+			graphicsEntitySetRotation(&gimEntity, rotation);
 		}
-		if (keyState[GLFW_KEY_Y])
+		else
 		{
-			if (keyState[GLFW_KEY_LEFT_SHIFT] || keyState[GLFW_KEY_RIGHT_SHIFT])
-			{
-				Vec3 rotation = gimEntity.worldRotation;
-				rotation.y += rotationSpeed * deltaTime;
-				graphicsEntitySetRotation(&gimEntity, rotation);
-			}
-			else
-			{
-				Vec3 rotation = gimEntity.worldRotation;
-				rotation.y -= rotationSpeed * deltaTime;
-				graphicsEntitySetRotation(&gimEntity, rotation);
-			}
+			Vec3 rotation = gimEntity.worldRotation;
+			rotation.x += rotationSpeed * deltaTime;
+			graphicsEntitySetRotation(&gimEntity, rotation);
 		}
-		if (keyState[GLFW_KEY_Z])
+	}
+	if (keyState[GLFW_KEY_Y])
+	{
+		if (keyState[GLFW_KEY_LEFT_SHIFT] || keyState[GLFW_KEY_RIGHT_SHIFT])
 		{
-			if (keyState[GLFW_KEY_LEFT_SHIFT] || keyState[GLFW_KEY_RIGHT_SHIFT])
-			{
-				Vec3 rotation = gimEntity.worldRotation;
-				rotation.z += rotationSpeed * deltaTime;
-				graphicsEntitySetRotation(&gimEntity, rotation);
-			}
-			else
-			{
-				Vec3 rotation = gimEntity.worldRotation;
-				rotation.z -= rotationSpeed * deltaTime;
-				graphicsEntitySetRotation(&gimEntity, rotation);
-			}
-}
+			Vec3 rotation = gimEntity.worldRotation;
+			rotation.y += rotationSpeed * deltaTime;
+			graphicsEntitySetRotation(&gimEntity, rotation);
+		}
+		else
+		{
+			Vec3 rotation = gimEntity.worldRotation;
+			rotation.y -= rotationSpeed * deltaTime;
+			graphicsEntitySetRotation(&gimEntity, rotation);
+		}
+	}
+	if (keyState[GLFW_KEY_Z])
+	{
+		if (keyState[GLFW_KEY_LEFT_SHIFT] || keyState[GLFW_KEY_RIGHT_SHIFT])
+		{
+			Vec3 rotation = gimEntity.worldRotation;
+			rotation.z += rotationSpeed * deltaTime;
+			graphicsEntitySetRotation(&gimEntity, rotation);
+		}
+		else
+		{
+			Vec3 rotation = gimEntity.worldRotation;
+			rotation.z -= rotationSpeed * deltaTime;
+			graphicsEntitySetRotation(&gimEntity, rotation);
+		}
+	}
+
 	if (keyState[GLFW_KEY_F])
 	{
-		gim = filterGeometryImageFilter(&gim, 10, 0.99f, 1.0f, CURVATURE_FILTER);
+		gim = filterGeometryImageFilter(&gim, 10, 100.0f, 1.0f, CURVATURE_FILTER);
 		gimGeometryImageUpdate3D(&gim);
 		Mesh m = gimGeometryImageToMesh(&gim, (Vec4) {0.0f, 0.0f, 1.0f, 1.0f});
 		graphicsEntityMeshReplace(&gimEntity, m, false, false);
 		keyState[GLFW_KEY_F] = false;
+	}
+
+	if (keyState[GLFW_KEY_C])
+	{
+		FloatImageData curvatureImage = dtGenerateCurvatureImage(&gim, 100.0f, 1.0f);
+		FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
+		graphicsFloatImageSave("./res/curv.bmp", &normalizedCurvatureImage);
+		graphicsFloatImageFree(&curvatureImage);
+		u32 curvatureTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
+		gimCheckGeometryImage(&normalizedCurvatureImage);
+		graphicsFloatImageFree(&normalizedCurvatureImage);
+		graphicsMeshChangeDiffuseMap(&gimEntity.mesh, curvatureTexture, false);
+		keyState[GLFW_KEY_C] = false;
 	}
 }
 

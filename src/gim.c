@@ -205,17 +205,17 @@ static r32 normalize(r32 v, r32 min, r32 max)
 	return (v - min) / (max - min);
 }
 
-extern FloatImageData gimNormalizeForVisualization(const GeometryImage* gim)
+extern FloatImageData gimNormalizeImageForVisualization(const FloatImageData* gimImage)
 {
 	r32 rMin = FLT_MAX, gMin = FLT_MAX, bMin = FLT_MAX;
 	r32 rMax = -FLT_MAX, gMax = -FLT_MAX, bMax = -FLT_MAX;
 
-	for (s32 i = 0; i < gim->img.height; ++i)
-		for (s32 j = 0; j < gim->img.width; ++j)
+	for (s32 i = 0; i < gimImage->height; ++i)
+		for (s32 j = 0; j < gimImage->width; ++j)
 		{
-			r32 r = gim->img.data[gim->img.width * gim->img.channels * i + gim->img.channels * j + 0];
-			r32 g = gim->img.data[gim->img.width * gim->img.channels * i + gim->img.channels * j + 1];
-			r32 b = gim->img.data[gim->img.width * gim->img.channels * i + gim->img.channels * j + 2];
+			r32 r = gimImage->data[gimImage->width * gimImage->channels * i + gimImage->channels * j + 0];
+			r32 g = gimImage->data[gimImage->width * gimImage->channels * i + gimImage->channels * j + 1];
+			r32 b = gimImage->data[gimImage->width * gimImage->channels * i + gimImage->channels * j + 2];
 
 			if (r < rMin) rMin = r;
 			if (g < gMin) gMin = g;
@@ -226,17 +226,17 @@ extern FloatImageData gimNormalizeForVisualization(const GeometryImage* gim)
 		}
 
 	FloatImageData result;
-	result.data = malloc(gim->img.width * gim->img.height * 4 * sizeof(r32));
-	result.height = gim->img.height;
-	result.width = gim->img.width;
+	result.data = malloc(gimImage->width * gimImage->height * 4 * sizeof(r32));
+	result.height = gimImage->height;
+	result.width = gimImage->width;
 	result.channels = 4;
 
-	for (s32 i = 0; i < gim->img.height; ++i)
-		for (s32 j = 0; j < gim->img.width; ++j)
+	for (s32 i = 0; i < gimImage->height; ++i)
+		for (s32 j = 0; j < gimImage->width; ++j)
 		{
-			r32 r = gim->img.data[gim->img.width * gim->img.channels * i + gim->img.channels * j + 0];
-			r32 g = gim->img.data[gim->img.width * gim->img.channels * i + gim->img.channels * j + 1];
-			r32 b = gim->img.data[gim->img.width * gim->img.channels * i + gim->img.channels * j + 2];
+			r32 r = gimImage->data[gimImage->width * gimImage->channels * i + gimImage->channels * j + 0];
+			r32 g = gimImage->data[gimImage->width * gimImage->channels * i + gimImage->channels * j + 1];
+			r32 b = gimImage->data[gimImage->width * gimImage->channels * i + gimImage->channels * j + 2];
 
 			result.data[result.width * result.channels * i + result.channels * j + 0] = normalize(r, rMin, rMax);
 			result.data[result.width * result.channels * i + result.channels * j + 1] = normalize(g, gMin, gMax);
@@ -249,7 +249,7 @@ extern FloatImageData gimNormalizeForVisualization(const GeometryImage* gim)
 
 extern void gimNormalizeAndSave(const GeometryImage* gim, const s8* imagePath)
 {
-	FloatImageData normalizedTexture = gimNormalizeForVisualization(gim);
+	FloatImageData normalizedTexture = gimNormalizeImageForVisualization(&gim->img);
 	graphicsFloatImageSave(imagePath, &normalizedTexture);
 	graphicsFloatImageFree(&normalizedTexture);
 }
@@ -294,4 +294,67 @@ extern void gimFreeGeometryImage(GeometryImage* gim)
 		array_release(gim->vertices);
 	if (gim->normals)
 		free(gim->normals);
+}
+
+static void checkNumberOfMatches(const FloatImageData* gimImage, s32 x, s32 y)
+{
+	DiscreteVec2* matches = array_create(DiscreteVec2, 1);
+	Vec3 vertex = *(Vec3*)&gimImage->data[y * gimImage->width * gimImage->channels + x * gimImage->channels];
+
+	for (s32 i = 0; i < gimImage->height; ++i)
+	{
+		DiscreteVec2 currentPosition = (DiscreteVec2) {i, 0};
+		Vec3 currentVertex = *(Vec3*)&gimImage->data[currentPosition.y * gimImage->width * gimImage->channels + currentPosition.x * gimImage->channels];
+		if (gmEqualVec3(currentVertex, vertex))
+			array_push(matches, &currentPosition);
+
+		currentPosition = (DiscreteVec2) {i, gimImage->width - 1};
+		currentVertex = *(Vec3*)&gimImage->data[currentPosition.y * gimImage->width * gimImage->channels + currentPosition.x * gimImage->channels];
+		if (gmEqualVec3(currentVertex, vertex))
+			array_push(matches, &currentPosition);
+	}
+
+	for (s32 j = 1; j < gimImage->width - 1; ++j)
+	{
+		DiscreteVec2 currentPosition = (DiscreteVec2) {0, j};
+		Vec3 currentVertex = *(Vec3*)&gimImage->data[currentPosition.y * gimImage->width * gimImage->channels + currentPosition.x * gimImage->channels];
+		if (gmEqualVec3(currentVertex, vertex))
+			array_push(matches, &currentPosition);
+
+		currentPosition = (DiscreteVec2) {gimImage->height - 1, j};
+		currentVertex = *(Vec3*)&gimImage->data[currentPosition.y * gimImage->width * gimImage->channels + currentPosition.x * gimImage->channels];
+		if (gmEqualVec3(currentVertex, vertex))
+			array_push(matches, &currentPosition);
+	}
+
+	s32 numberOfMatches = array_get_length(matches);
+
+	if (numberOfMatches != 2)
+	{
+		printf("Found Odd Pixel: <%d, %d>\n", x, y);
+		printf("Matches:\n");
+		for (s32 i = 0; i < numberOfMatches; ++i)
+		{
+			DiscreteVec2 match = matches[i];
+			printf("\t<%d, %d>\n", match.x, match.y);
+		}
+	}
+
+	array_release(matches);
+}
+
+// Auxiliar function to detect errors in a spherical geometry image
+extern void gimCheckGeometryImage(const FloatImageData* gimImage)
+{
+	for (s32 i = 0; i < gimImage->height; ++i)
+	{
+		checkNumberOfMatches(gimImage, 0, i);
+		checkNumberOfMatches(gimImage, gimImage->width - 1, i);
+	}
+
+	for (s32 j = 1; j < gimImage->width - 1; ++j)
+	{
+		checkNumberOfMatches(gimImage, j, 0);
+		checkNumberOfMatches(gimImage, j, gimImage->height - 1);
+	}
 }

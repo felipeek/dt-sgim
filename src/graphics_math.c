@@ -286,6 +286,27 @@ extern Mat2 gmIdentityMat2(void)
 	};
 }
 
+extern boolean gmEqualVec2(Vec2 v1, Vec2 v2)
+{
+	if (v1.x == v2.x && v1.y == v2.y)
+		return true;
+	return false;
+}
+
+extern boolean gmEqualVec3(Vec3 v1, Vec3 v2)
+{
+	if (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z)
+		return true;
+	return false;
+}
+
+extern boolean gmEqualVec4(Vec4 v1, Vec4 v2)
+{
+	if (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z && v1.w == v2.w)
+		return true;
+	return false;
+}
+
 extern Vec4 gmScalarProductVec4(r32 scalar, Vec4 v)
 {
 	return (Vec4) { scalar * v.x, scalar * v.y, scalar * v.z, scalar * v.w };

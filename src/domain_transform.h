@@ -14,10 +14,17 @@ struct DomainTransform
 	r32* horizontal;
 };
 
-extern DomainTransform dtFillDomainTransforms(
+extern DomainTransform dtGenerateDomainTransforms(
 	const GeometryImage* gim,
 	FilterMode filterMode,
 	r32 spatialFactor,
 	r32 rangeFactor);
+
+extern FloatImageData dtGenerateCurvatureImage(
+	const GeometryImage* gim,
+	r32 spatialFactor,
+	r32 rangeFactor);
+
+extern void dtDeleteDomainTransforms(DomainTransform dt);
 
 #endif
