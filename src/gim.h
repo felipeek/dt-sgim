@@ -21,6 +21,7 @@ extern FloatImageData gimNormalizeImageForVisualization(const FloatImageData* gi
 extern void gimNormalizeAndSave(const GeometryImage* gim, const s8* imagePath);
 extern void gimFreeGeometryImage(GeometryImage* gim);
 extern void gimCheckGeometryImage(const FloatImageData* gimImage);
-extern GeometryImage gimCopyGeometryImage(const GeometryImage* gim);
+extern GeometryImage gimCopyGeometryImage(const GeometryImage* gim, boolean copy3d);
+extern GeometryImage gimAddNoise(const GeometryImage* gim, r32 noiseIntensity);
 
 #endif

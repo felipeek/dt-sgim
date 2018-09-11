@@ -1,6 +1,7 @@
 #define DYNAMIC_ARRAY_IMPLEMENT
 #include "gim.h"
 #include "float.h"
+#include "util.h"
 #include <stdio.h>
 
 // Parses a .gim file into a GeometryImage
@@ -253,37 +254,25 @@ extern void gimNormalizeAndSave(const GeometryImage* gim, const s8* imagePath)
 	graphicsFloatImageSave(imagePath, &normalizedTexture);
 	graphicsFloatImageFree(&normalizedTexture);
 }
-/*
-extern FloatImageData gimAddNoise(const FloatImageData* gim, r32 noiseWeight, r32 noiseThreshold, const Vec4* meshNormals)
+
+extern GeometryImage gimAddNoise(const GeometryImage* gim, r32 noiseIntensity)
 {
-	FloatImageData noisedGim = graphicsFloatImageCopy(gim);
+	GeometryImage noisyGim = gimCopyGeometryImage(gim, false);
 
-	r32* hdt = malloc(sizeof(r32) * gim->width * gim->height);
-	r32* vdt = malloc(sizeof(r32) * gim->width * gim->height);
-	r32 noiseWeightNormalized = noiseWeight / 1000.0f;
-	dtFillDomainTransforms(gim, meshNormals, CURVATURE_FILTER, vdt, hdt, 100.0f, 1.0f);
+	r32 noiseWeightNormalized = noiseIntensity / 1000.0f;
 
-	for (s32 i = 0; i < noisedGim.height; ++i)
-		for (s32 j = 0; j < noisedGim.width; ++j)
+	for (s32 i = 0; i < noisyGim.img.height; ++i)
+		for (s32 j = 0; j < noisyGim.img.width; ++j)
 		{
-			r32 horizontalCurvature = hdt[i * noisedGim.width + j];
-			r32 verticalCurvature = vdt[i * noisedGim.width + j];
-			r32 curvatureValue = (horizontalCurvature + verticalCurvature) / 2.0f;
-
-			if (curvatureValue < noiseThreshold)
-			{
-				Vec3 vertex = *(Vec3*)&noisedGim.data[i * noisedGim.width * noisedGim.channels + j * noisedGim.channels];
-				vertex.x += getRandomNumberN() * noiseWeightNormalized;
-				vertex.y += getRandomNumberN() * noiseWeightNormalized;
-				vertex.z += getRandomNumberN() * noiseWeightNormalized;
-				*(Vec3*)&noisedGim.data[i * noisedGim.width * noisedGim.channels + j * noisedGim.channels] = vertex;
-			}
+			Vec3 vertex = *(Vec3*)&noisyGim.img.data[i * noisyGim.img.width * noisyGim.img.channels + j * noisyGim.img.channels];
+			vertex.x += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
+			vertex.y += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
+			vertex.z += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
+			*(Vec3*)&noisyGim.img.data[i * noisyGim.img.width * noisyGim.img.channels + j * noisyGim.img.channels] = vertex;
 		}
 
-	free(hdt);
-	free(vdt);
-	return noisedGim;
-}*/
+	return noisyGim;
+}
 
 extern void gimFreeGeometryImage(GeometryImage* gim)
 {
@@ -359,26 +348,30 @@ extern void gimCheckGeometryImage(const FloatImageData* gimImage)
 	}
 }
 
-extern GeometryImage gimCopyGeometryImage(const GeometryImage* gim)
+extern GeometryImage gimCopyGeometryImage(const GeometryImage* gim, boolean copy3d)
 {
 	GeometryImage copy = {0};
 	copy.img = graphicsFloatImageCopy(&gim->img);
-	if (gim->indexes)
+
+	if (copy3d)
 	{
-		copy.indexes = array_create(u32, 1);
-		array_allocate(copy.indexes, array_get_length(gim->indexes));
-		memcpy(copy.indexes, gim->indexes, array_get_length(gim->indexes) * sizeof(u32));
-	}
-	if (gim->vertices)
-	{
-		copy.vertices = array_create(Vertex, 1);
-		array_allocate(copy.vertices, array_get_length(gim->vertices));
-		memcpy(copy.vertices, gim->vertices, array_get_length(gim->vertices) * sizeof(Vertex));
-	}
-	if (gim->normals)
-	{
-		copy.normals = malloc(sizeof(Vec4) * gim->img.width * gim->img.height);
-		memcpy(copy.normals, gim->normals, sizeof(Vec4) * gim->img.width * gim->img.height);
+		if (gim->indexes)
+		{
+			copy.indexes = array_create(u32, 1);
+			array_allocate(copy.indexes, array_get_length(gim->indexes));
+			memcpy(copy.indexes, gim->indexes, array_get_length(gim->indexes) * sizeof(u32));
+		}
+		if (gim->vertices)
+		{
+			copy.vertices = array_create(Vertex, 1);
+			array_allocate(copy.vertices, array_get_length(gim->vertices));
+			memcpy(copy.vertices, gim->vertices, array_get_length(gim->vertices) * sizeof(Vertex));
+		}
+		if (gim->normals)
+		{
+			copy.normals = malloc(sizeof(Vec4) * gim->img.width * gim->img.height);
+			memcpy(copy.normals, gim->normals, sizeof(Vec4) * gim->img.width * gim->img.height);
+		}
 	}
 	return copy;
 }

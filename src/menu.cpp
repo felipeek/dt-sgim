@@ -15,11 +15,13 @@ typedef void (*RecursiveFilterCallback)(r32, s32);
 typedef void (*DistanceFilterCallback)(r32, r32, s32);
 typedef void (*CurvatureFilterCallback)(r32, r32, s32, s32, r32, r32);
 typedef void (*TextureChangeCallback)(s32);
+typedef void (*NoiseGeneratorCallback)(r32);
 
 static RecursiveFilterCallback recursiveFilterCallback;
 static DistanceFilterCallback distanceFilterCallback;
 static CurvatureFilterCallback curvatureFilterCallback;
 static TextureChangeCallback textureChangeCallback;
+static NoiseGeneratorCallback noiseGeneratorCallback;
 
 extern "C" void menuRegisterRecursiveFilterCallBack(RecursiveFilterCallback f)
 {
@@ -39,6 +41,11 @@ extern "C" void menuRegisterCurvatureFilterCallBack(CurvatureFilterCallback f)
 extern "C" void menuRegisterTextureChangeCallBack(TextureChangeCallback f)
 {
     textureChangeCallback = f;
+}
+
+extern "C" void menuRegisterNoiseGeneratorCallBack(NoiseGeneratorCallback f)
+{
+    noiseGeneratorCallback = f;
 }
 
 extern "C" void menuCharClickProcess(GLFWwindow* window, u32 c)
@@ -145,7 +152,13 @@ static void drawMainWindow()
     
     if (ImGui::CollapsingHeader("Noise Generator"))
     {
-        
+        static r32 noiseIntensity = 0.0f;
+        ImGui::DragFloat("Intensity##noise", &noiseIntensity, 0.001f, 0.0f, 1.0f);
+        if (ImGui::Button("Apply##noise"))
+        {
+            if (noiseGeneratorCallback)
+                noiseGeneratorCallback(noiseIntensity);
+        }
     }
 
     if (ImGui::CollapsingHeader("Texture"))

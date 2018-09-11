@@ -14,12 +14,17 @@ static Shader phongShader;
 static PerspectiveCamera camera;
 static Light light;
 
+static void updateFilteredGimMesh()
+{
+	Mesh m = gimGeometryImageToMesh(&filteredGim, (Vec4) {0.0f, 0.0f, 1.0f, 1.0f});
+	graphicsEntityMeshReplace(&gimEntity, m, false, false);
+}
+
 static void filterRecursiveCallback(r32 ss, s32 n)
 {
 	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, 0.0f, RECURSIVE_FILTER, 0);
 	gimGeometryImageUpdate3D(&filteredGim);
-	Mesh m = gimGeometryImageToMesh(&filteredGim, (Vec4) {0.0f, 0.0f, 1.0f, 1.0f});
-	graphicsEntityMeshReplace(&gimEntity, m, false, false);
+	updateFilteredGimMesh();
 }
 
 static void filterCurvatureCallback(r32 ss, r32 sr, s32 n, s32 blurMode, r32 blurSS, r32 blurSR)
@@ -40,16 +45,14 @@ static void filterCurvatureCallback(r32 ss, r32 sr, s32 n, s32 blurMode, r32 blu
 
 	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, sr, CURVATURE_FILTER, &blurInformation);
 	gimGeometryImageUpdate3D(&filteredGim);
-	Mesh m = gimGeometryImageToMesh(&filteredGim, (Vec4) {0.0f, 0.0f, 1.0f, 1.0f});
-	graphicsEntityMeshReplace(&gimEntity, m, false, false);
+	updateFilteredGimMesh();
 }
 
 static void filterDistanceCallback(r32 ss, r32 sr, s32 n)
 {
 	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, sr, DISTANCE_FILTER, 0);
 	gimGeometryImageUpdate3D(&filteredGim);
-	Mesh m = gimGeometryImageToMesh(&filteredGim, (Vec4) {0.0f, 0.0f, 1.0f, 1.0f});
-	graphicsEntityMeshReplace(&gimEntity, m, false, false);
+	updateFilteredGimMesh();
 }
 
 static void textureChangeCallBack(s32 textureNumber)
@@ -103,12 +106,23 @@ static void textureChangeCallBack(s32 textureNumber)
 	}
 }
 
+static void noiseGeneratorCallback(r32 intensity)
+{
+	gimFreeGeometryImage(&noisyGim);
+	gimFreeGeometryImage(&filteredGim);
+	noisyGim = gimAddNoise(&originalGim, intensity);
+	gimGeometryImageUpdate3D(&noisyGim);
+	filteredGim = gimCopyGeometryImage(&noisyGim, true);
+	updateFilteredGimMesh();
+}
+
 static void registerMenuCallbacks()
 {
 	menuRegisterRecursiveFilterCallBack(filterRecursiveCallback);
 	menuRegisterCurvatureFilterCallBack(filterCurvatureCallback);
 	menuRegisterDistanceFilterCallBack(filterDistanceCallback);
 	menuRegisterTextureChangeCallBack(textureChangeCallBack);
+	menuRegisterNoiseGeneratorCallBack(noiseGeneratorCallback);
 }
 
 static PerspectiveCamera createCamera()
@@ -142,9 +156,9 @@ static void loadGeometryImage(const s8* gimPath)
 	// Update 3d information
 	gimGeometryImageUpdate3D(&originalGim);
 	// Copy original gim to noisy gim
-	noisyGim = gimCopyGeometryImage(&originalGim);
+	noisyGim = gimCopyGeometryImage(&originalGim, true);
 	// Copy original gim to filtered gim
-	filteredGim = gimCopyGeometryImage(&originalGim);
+	filteredGim = gimCopyGeometryImage(&originalGim, true);
 
 	// Transform filtered geometry image to a mesh
 	Mesh m = gimGeometryImageToMesh(&filteredGim, GIM_ENTITY_COLOR);

@@ -2,6 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+extern r32 utilRandomFloat(r32 min, r32 max)
+{
+    r32 scale = rand() / (r32)RAND_MAX;
+    return min + scale * (max - min);
+}
+
 extern s8* utilReadFile(const s8* path, s32* _fileLength)
 {
 	FILE* file;
