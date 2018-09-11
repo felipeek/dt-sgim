@@ -2,10 +2,6 @@
 #define DT_MESH_SMOOTHING_DOMAIN_TRANSFORM_H
 #include "filter.h"
 
-// @TODO: this should be adjustable (UI)
-#define DT_BLUR_SS 0.8f
-#define DT_BLUR_SR 1.0f
-
 typedef struct DomainTransform DomainTransform;
 
 struct DomainTransform
@@ -18,12 +14,14 @@ extern DomainTransform dtGenerateDomainTransforms(
 	const GeometryImage* gim,
 	FilterMode filterMode,
 	r32 spatialFactor,
-	r32 rangeFactor);
+	r32 rangeFactor,
+	const BlurInformation* blurInformation);
 
 extern FloatImageData dtGenerateCurvatureImage(
 	const GeometryImage* gim,
 	r32 spatialFactor,
-	r32 rangeFactor);
+	r32 rangeFactor,
+	const BlurInformation* blurInformation);
 
 extern void dtDeleteDomainTransforms(DomainTransform dt);
 

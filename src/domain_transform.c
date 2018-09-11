@@ -1,12 +1,15 @@
 #include "domain_transform.h"
 #include "gim.h"
+#include <assert.h>
 
 // Blur domain transforms
-static void blurDomainTransform(const GeometryImage* gim, DomainTransform domainTransform, r32 ss, r32 sr)
+static void blurDomainTransform(const GeometryImage* gim, DomainTransform domainTransform, r32 ss, r32 sr, FilterMode blurMode)
 {
 	// filter properties currently being used to perform the blur
-	const FilterMode blurMode = RECURSIVE_FILTER;
-	const s32 blurIterations = 10;
+	const s32 blurIterations = 3;
+
+	// blurMode can't be CURVATURE_FILTER because it would result in an infinite loop
+	assert(blurMode != CURVATURE_FILTER);
 
 	// To properly use the filter, we need to wrap the domain transforms using a "fake geometry image"
 	GeometryImage dtGim = {0};
@@ -25,7 +28,7 @@ static void blurDomainTransform(const GeometryImage* gim, DomainTransform domain
 		}
 
 	// Blur the fake geometry image 
-	GeometryImage horizontalResultGim = filterGeometryImageFilter(&dtGim, blurIterations, ss, sr, blurMode);
+	GeometryImage horizontalResultGim = filterGeometryImageFilter(&dtGim, blurIterations, ss, sr, blurMode, 0);
 
 	// Store results
 	for (s32 i = 0; i < dtGim.img.height; ++i)
@@ -43,7 +46,7 @@ static void blurDomainTransform(const GeometryImage* gim, DomainTransform domain
 		}
 
 	// Blur the fake geometry image 
-	GeometryImage verticalResultGim = filterGeometryImageFilter(&dtGim, blurIterations, ss, sr, blurMode);
+	GeometryImage verticalResultGim = filterGeometryImageFilter(&dtGim, blurIterations, ss, sr, blurMode, 0);
 
 	// Store results
 	for (s32 i = 0; i < dtGim.img.height; ++i)
@@ -52,6 +55,8 @@ static void blurDomainTransform(const GeometryImage* gim, DomainTransform domain
 				verticalResultGim.img.data[i * verticalResultGim.img.width * verticalResultGim.img.channels + j * verticalResultGim.img.channels];
 
 	free(dtGim.img.data);
+	gimFreeGeometryImage(&horizontalResultGim);
+	gimFreeGeometryImage(&verticalResultGim);
 }
 
 // Calculates and stores the domain transform of pixel 'currentPixel'
@@ -146,7 +151,8 @@ extern DomainTransform dtGenerateDomainTransforms(
 	const GeometryImage* gim,
 	FilterMode filterMode,
 	r32 spatialFactor,
-	r32 rangeFactor)
+	r32 rangeFactor,
+	const BlurInformation* blurInformation)
 {
 	DomainTransform domainTransform;
     DiscreteVec2 nextPixel, currentPixel, lastPixel, penultPixel;
@@ -284,8 +290,8 @@ extern DomainTransform dtGenerateDomainTransforms(
 	}
 
     // BLUR STEP
-    if (filterMode == CURVATURE_FILTER)
-        blurDomainTransform(gim, domainTransform, DT_BLUR_SS, DT_BLUR_SR);
+	if (filterMode == CURVATURE_FILTER && blurInformation->useBlur)
+        blurDomainTransform(gim, domainTransform, blurInformation->ss, blurInformation->sr, blurInformation->blurMode);
 
     // FINAL STEP
 	for (s32 i = 0; i < gim->img.height; ++i)
@@ -307,9 +313,10 @@ extern void dtDeleteDomainTransforms(DomainTransform dt)
 extern FloatImageData dtGenerateCurvatureImage(
 	const GeometryImage* gim,
 	r32 spatialFactor,
-	r32 rangeFactor)
+	r32 rangeFactor,
+	const BlurInformation* blurInformation)
 {
-	DomainTransform domainTransform = dtGenerateDomainTransforms(gim, CURVATURE_FILTER, spatialFactor, rangeFactor);
+	DomainTransform domainTransform = dtGenerateDomainTransforms(gim, CURVATURE_FILTER, spatialFactor, rangeFactor, blurInformation);
 
 	// Alloc texture
 	FloatImageData curvatureImage;

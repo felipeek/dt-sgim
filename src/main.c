@@ -1,5 +1,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include "menu.h"
 #include "core.h"
 
 #define WINDOW_TITLE "gimmesh"
@@ -9,6 +10,7 @@ s32 windowHeight = 768;
 GLFWwindow* mainWindow;
 
 static boolean keyState[1024];	// @TODO: Check range.
+static boolean isMenuVisible = false;
 
 static void glfwKeyCallback(GLFWwindow* window, s32 key, s32 scanCode, s32 action, s32 mods)
 {
@@ -16,13 +18,32 @@ static void glfwKeyCallback(GLFWwindow* window, s32 key, s32 scanCode, s32 actio
 		keyState[key] = true;
 	if (action == GLFW_RELEASE)
 		keyState[key] = false;
-	if (key == GLFW_KEY_ESCAPE)
-		glfwSetWindowShouldClose(window, GLFW_TRUE);
+	if (keyState[GLFW_KEY_ESCAPE])
+	{
+		if (isMenuVisible)
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		else
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+		isMenuVisible = !isMenuVisible;
+		keyState[GLFW_KEY_ESCAPE] = !keyState[GLFW_KEY_ESCAPE];
+	}
+
+	if (isMenuVisible)
+		menuKeyClickProcess(window, key, scanCode, action, mods);
 }
 
 static void glfwCursorCallback(GLFWwindow* window, r64 xPos, r64 yPos)
 {
-	coreMouseChangeProcess(xPos, yPos);
+	static boolean resetCoreMouseMovement = true;
+
+	if (!isMenuVisible)
+	{
+		coreMouseChangeProcess(resetCoreMouseMovement, xPos, yPos);
+		resetCoreMouseMovement = false;
+	}
+	else
+		resetCoreMouseMovement = true;
 }
 
 static void glfwMouseButtonCallback(GLFWwindow* window, s32 button, s32 action, s32 mods)
@@ -30,12 +51,18 @@ static void glfwMouseButtonCallback(GLFWwindow* window, s32 button, s32 action, 
 	r64 xPos, yPos;
 	glfwGetCursorPos(window, &xPos, &yPos);
 	yPos = windowHeight - yPos;
-	coreMouseClickProcess(button, action, xPos, yPos);
+	if (!isMenuVisible)
+		coreMouseClickProcess(button, action, xPos, yPos);
+	else
+		menuMouseClickProcess(window, button, action, mods);
 }
 
 static void glfwScrollCallback(GLFWwindow* window, r64 xOffset, r64 yOffset)
 {
-	coreScrollChangeProcess(xOffset, yOffset);
+	if (!isMenuVisible)
+		coreScrollChangeProcess(xOffset, yOffset);
+	else
+		menuScrollChangeProcess(window, xOffset, yOffset);
 }
 
 static void glfwResizeCallback(GLFWwindow* window, s32 width, s32 height)
@@ -44,6 +71,12 @@ static void glfwResizeCallback(GLFWwindow* window, s32 width, s32 height)
 	windowHeight = height;
 	glViewport(0, 0, width, height);
 	coreWindowResizeProcess(width, height);
+}
+
+static void glfwCharCallback(GLFWwindow* window, u32 c)
+{
+	if (isMenuVisible)
+		menuCharClickProcess(window, c);
 }
 
 static GLFWwindow* initGlfw()
@@ -61,6 +94,7 @@ static GLFWwindow* initGlfw()
 	glfwSetMouseButtonCallback(window, glfwMouseButtonCallback);
 	glfwSetScrollCallback(window, glfwScrollCallback);
 	glfwSetWindowSizeCallback(window, glfwResizeCallback);
+	glfwSetCharCallback(window, glfwCharCallback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	return window;
@@ -88,6 +122,8 @@ extern s32 main(s32 argc, s8** argv)
 	s32 frameNumber = (s32)lastFrame;
 	u32 fps = 0;
 
+	menuInit(mainWindow);
+
 	while (!glfwWindowShouldClose(mainWindow))
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -95,7 +131,11 @@ extern s32 main(s32 argc, s8** argv)
 
 		coreUpdate(deltaTime);
 		coreRender();
-		coreInputProcess(keyState, deltaTime);
+		if (!isMenuVisible)
+			coreInputProcess(keyState, deltaTime);
+
+		if (isMenuVisible)
+			menuRender();
 
 		glfwPollEvents();
 		glfwSwapBuffers(mainWindow);
@@ -115,6 +155,7 @@ extern s32 main(s32 argc, s8** argv)
 		lastFrame = currentFrame;
 	}
 
+	menuDestroy();
 	coreDestroy();
 	glfwTerminate();
 }

@@ -2,3 +2,4 @@ bin/
 res/
 .vscode/
 .vs/
+*.ini

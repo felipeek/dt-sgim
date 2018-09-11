@@ -1,8 +1,8 @@
 #include "filter.h"
+#include "domain_transform.h"
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
-#include "domain_transform.h"
 #include "gim.h"
 
 #define SQRT3 1.7320508075f
@@ -894,7 +894,8 @@ extern GeometryImage filterGeometryImageFilter(
 	s32 numIterations,
 	r32 spatialFactor,
 	r32 rangeFactor,
-	FilterMode filterMode)
+	FilterMode filterMode,
+	const BlurInformation* blurInformation)
 {
 	GeometryImage filteredGim = {0};
 	filteredGim.img = graphicsFloatImageCopy(&originalGim->img);
@@ -907,7 +908,7 @@ extern GeometryImage filterGeometryImageFilter(
 
 	// Calculate domain transforms
 	printf("Calculating domain transforms...\n");
-	DomainTransform domainTransform = dtGenerateDomainTransforms(originalGim, filterMode, spatialFactor, rangeFactor);
+	DomainTransform domainTransform = dtGenerateDomainTransforms(originalGim, filterMode, spatialFactor, rangeFactor, blurInformation);
 
 	/* ************************ */
 	printf("Calculating RF feedback coefficients...\n");

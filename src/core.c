@@ -2,15 +2,114 @@
 #include "core.h"
 #include "filter.h"
 #include "domain_transform.h"
+#include "menu.h"
 
 #define PHONG_VERTEX_SHADER_PATH "./shaders/phong_shader.vs"
 #define PHONG_FRAGMENT_SHADER_PATH "./shaders/phong_shader.fs"
+#define GIM_ENTITY_COLOR (Vec4) {0.0f, 0.0f, 1.0f, 1.0f}
 
-static GeometryImage gim;
+static GeometryImage originalGim, noisyGim, filteredGim;
 static Entity gimEntity;
 static Shader phongShader;
 static PerspectiveCamera camera;
 static Light light;
+
+static void filterRecursiveCallback(r32 ss, s32 n)
+{
+	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, 0.0f, RECURSIVE_FILTER, 0);
+	gimGeometryImageUpdate3D(&filteredGim);
+	Mesh m = gimGeometryImageToMesh(&filteredGim, (Vec4) {0.0f, 0.0f, 1.0f, 1.0f});
+	graphicsEntityMeshReplace(&gimEntity, m, false, false);
+}
+
+static void filterCurvatureCallback(r32 ss, r32 sr, s32 n, s32 blurMode, r32 blurSS, r32 blurSR)
+{
+	BlurInformation blurInformation = {0};
+	if (blurMode == 0)
+		blurInformation.useBlur = false;
+	else
+		blurInformation.useBlur = true;
+
+	if (blurMode == 1)
+		blurInformation.blurMode = RECURSIVE_FILTER;
+	else if (blurMode == 2)
+		blurInformation.blurMode = DISTANCE_FILTER;
+	
+	blurInformation.ss = blurSS;
+	blurInformation.sr = blurSR;
+
+	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, sr, CURVATURE_FILTER, &blurInformation);
+	gimGeometryImageUpdate3D(&filteredGim);
+	Mesh m = gimGeometryImageToMesh(&filteredGim, (Vec4) {0.0f, 0.0f, 1.0f, 1.0f});
+	graphicsEntityMeshReplace(&gimEntity, m, false, false);
+}
+
+static void filterDistanceCallback(r32 ss, r32 sr, s32 n)
+{
+	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, sr, DISTANCE_FILTER, 0);
+	gimGeometryImageUpdate3D(&filteredGim);
+	Mesh m = gimGeometryImageToMesh(&filteredGim, (Vec4) {0.0f, 0.0f, 1.0f, 1.0f});
+	graphicsEntityMeshReplace(&gimEntity, m, false, false);
+}
+
+static void textureChangeCallBack(s32 textureNumber)
+{
+	static u32 currentTexture = 0;
+	static boolean hasTexture = false;
+
+	if (hasTexture)
+	{
+		graphicsTextureDelete(currentTexture);
+		hasTexture = false;
+	}
+
+	// Solid color
+	if (textureNumber == 0)
+	{
+		graphicsMeshChangeColor(&gimEntity.mesh, GIM_ENTITY_COLOR, false);
+	}
+	// Curvature texture w/ blur
+	else if (textureNumber == 1)
+	{
+		BlurInformation blurInformation;
+		blurInformation.blurMode = RECURSIVE_FILTER;
+		blurInformation.ss = 0.8f;
+		blurInformation.sr = 1.0f;
+		blurInformation.useBlur	= true;
+		FloatImageData curvatureImage = dtGenerateCurvatureImage(&noisyGim, 100.0f, 1.0f, &blurInformation);
+		FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
+		graphicsFloatImageSave("./res/curv_w_blur.bmp", &normalizedCurvatureImage);
+		graphicsFloatImageFree(&curvatureImage);
+		currentTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
+		//gimCheckGeometryImage(&normalizedCurvatureImage);
+		graphicsFloatImageFree(&normalizedCurvatureImage);
+		graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, false);
+		hasTexture = true;
+	}
+	// Curvature texture wo/ blur
+	else if (textureNumber == 2)
+	{
+		BlurInformation blurInformation;
+		blurInformation.useBlur	= false;
+		FloatImageData curvatureImage = dtGenerateCurvatureImage(&noisyGim, 100.0f, 1.0f, &blurInformation);
+		FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
+		graphicsFloatImageSave("./res/curv_wo_blur.bmp", &normalizedCurvatureImage);
+		graphicsFloatImageFree(&curvatureImage);
+		currentTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
+		//gimCheckGeometryImage(&normalizedCurvatureImage);
+		graphicsFloatImageFree(&normalizedCurvatureImage);
+		graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, false);
+		hasTexture = true;
+	}
+}
+
+static void registerMenuCallbacks()
+{
+	menuRegisterRecursiveFilterCallBack(filterRecursiveCallback);
+	menuRegisterCurvatureFilterCallBack(filterCurvatureCallback);
+	menuRegisterDistanceFilterCallBack(filterDistanceCallback);
+	menuRegisterTextureChangeCallBack(textureChangeCallBack);
+}
 
 static PerspectiveCamera createCamera()
 {
@@ -36,27 +135,42 @@ static Light createLight()
 	return light;
 }
 
-extern void coreInit(s8* gimPath)
+static void loadGeometryImage(const s8* gimPath)
 {
+	// Parse the original geometry image
+	originalGim = gimParseGeometryImageFile(gimPath);
+	// Update 3d information
+	gimGeometryImageUpdate3D(&originalGim);
+	// Copy original gim to noisy gim
+	noisyGim = gimCopyGeometryImage(&originalGim);
+	// Copy original gim to filtered gim
+	filteredGim = gimCopyGeometryImage(&originalGim);
+
+	// Transform filtered geometry image to a mesh
+	Mesh m = gimGeometryImageToMesh(&filteredGim, GIM_ENTITY_COLOR);
+	// Create filteredGim's entity
+	graphicsEntityCreate(&gimEntity, m, (Vec4){0.0f, 0.0f, 0.0f, 1.0f}, (Vec3){0.0f, 0.0f, 0.0f}, (Vec3){1.0f, 1.0f, 1.0f});
+}
+
+extern void coreInit(const s8* gimPath)
+{
+	// Register menu callbacks
+	registerMenuCallbacks();
 	// Create shader
 	phongShader = graphicsShaderCreate(PHONG_VERTEX_SHADER_PATH, PHONG_FRAGMENT_SHADER_PATH);
 	// Create camera
 	camera = createCamera();
 	// Load geometry image	
-	gim = gimParseGeometryImageFile(gimPath);
-	// Update geometry image 3d properties
-	gimGeometryImageUpdate3D(&gim);
-	// Transform geometry image to a mesh
-	Mesh m = gimGeometryImageToMesh(&gim, (Vec4) {0.0f, 0.0f, 1.0f, 1.0f});
-	// Create gim's entity
-	graphicsEntityCreate(&gimEntity, m, (Vec4){0.0f, 0.0f, 0.0f, 1.0f}, (Vec3){0.0f, 0.0f, 0.0f}, (Vec3){1.0f, 1.0f, 1.0f});
+	loadGeometryImage(gimPath);
 	// Create light
 	light = createLight();
 }
 
 extern void coreDestroy()
 {
-	gimFreeGeometryImage(&gim);
+	gimFreeGeometryImage(&originalGim);
+	gimFreeGeometryImage(&noisyGim);
+	gimFreeGeometryImage(&filteredGim);
 }
 
 extern void coreUpdate(r32 deltaTime)
@@ -132,40 +246,28 @@ extern void coreInputProcess(boolean* keyState, r32 deltaTime)
 			graphicsEntitySetRotation(&gimEntity, rotation);
 		}
 	}
-
-	if (keyState[GLFW_KEY_F])
+	if (keyState[GLFW_KEY_L])
 	{
-		gim = filterGeometryImageFilter(&gim, 10, 100.0f, 1.0f, CURVATURE_FILTER);
-		gimGeometryImageUpdate3D(&gim);
-		Mesh m = gimGeometryImageToMesh(&gim, (Vec4) {0.0f, 0.0f, 1.0f, 1.0f});
-		graphicsEntityMeshReplace(&gimEntity, m, false, false);
-		keyState[GLFW_KEY_F] = false;
-	}
+		static boolean wireframe = false;
 
-	if (keyState[GLFW_KEY_C])
-	{
-		FloatImageData curvatureImage = dtGenerateCurvatureImage(&gim, 100.0f, 1.0f);
-		FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
-		graphicsFloatImageSave("./res/curv.bmp", &normalizedCurvatureImage);
-		graphicsFloatImageFree(&curvatureImage);
-		u32 curvatureTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
-		gimCheckGeometryImage(&normalizedCurvatureImage);
-		graphicsFloatImageFree(&normalizedCurvatureImage);
-		graphicsMeshChangeDiffuseMap(&gimEntity.mesh, curvatureTexture, false);
-		keyState[GLFW_KEY_C] = false;
+		if (wireframe)
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		else
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+		wireframe = !wireframe;
+		keyState[GLFW_KEY_L] = false;
 	}
 }
 
-extern void coreMouseChangeProcess(r64 xPos, r64 yPos)
+extern void coreMouseChangeProcess(boolean reset, r64 xPos, r64 yPos)
 {
-	static boolean resetOldPosition = true;
-
 	static r64 xPosOld, yPosOld;
 	// This constant is basically the mouse sensibility.
 	// @TODO: Allow mouse sensibility to be configurable.
 	static const r32 cameraMouseSpeed = 0.001f;
 
-	if (!resetOldPosition)
+	if (!reset)
 	{
 		r64 xDifference = xPos - xPosOld;
 		r64 yDifference = yPos - yPosOld;
@@ -176,8 +278,6 @@ extern void coreMouseChangeProcess(r64 xPos, r64 yPos)
 		cameraIncPitch(&camera, pitchAngle);
 		cameraIncYaw(&camera, yawAngle);
 	}
-	else
-		resetOldPosition = false;
 
 	xPosOld = xPos;
 	yPosOld = yPos;

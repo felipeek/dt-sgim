@@ -358,3 +358,27 @@ extern void gimCheckGeometryImage(const FloatImageData* gimImage)
 		checkNumberOfMatches(gimImage, j, gimImage->height - 1);
 	}
 }
+
+extern GeometryImage gimCopyGeometryImage(const GeometryImage* gim)
+{
+	GeometryImage copy = {0};
+	copy.img = graphicsFloatImageCopy(&gim->img);
+	if (gim->indexes)
+	{
+		copy.indexes = array_create(u32, 1);
+		array_allocate(copy.indexes, array_get_length(gim->indexes));
+		memcpy(copy.indexes, gim->indexes, array_get_length(gim->indexes) * sizeof(u32));
+	}
+	if (gim->vertices)
+	{
+		copy.vertices = array_create(Vertex, 1);
+		array_allocate(copy.vertices, array_get_length(gim->vertices));
+		memcpy(copy.vertices, gim->vertices, array_get_length(gim->vertices) * sizeof(Vertex));
+	}
+	if (gim->normals)
+	{
+		copy.normals = malloc(sizeof(Vec4) * gim->img.width * gim->img.height);
+		memcpy(copy.normals, gim->normals, sizeof(Vec4) * gim->img.width * gim->img.height);
+	}
+	return copy;
+}
