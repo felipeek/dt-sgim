@@ -140,6 +140,7 @@ static void noiseGeneratorCallback(r32 intensity)
 	gimFreeGeometryImage(&noisyGim);
 	gimFreeGeometryImage(&filteredGim);
 	noisyGim = gimAddNoise(&originalGim, intensity);
+	//gimCheckGeometryImage(&noisyGim.img);
 	gimGeometryImageUpdate3D(&noisyGim);
 	filteredGim = gimCopyGeometryImage(&noisyGim, true);
 	updateFilteredGimMesh();
