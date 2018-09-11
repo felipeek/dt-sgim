@@ -15,10 +15,14 @@ enum FilterMode
 
 struct BlurInformation
 {
-	boolean useBlur;
-	FilterMode blurMode;
-	r32 ss;
-	r32 sr;
+	boolean blurCurvatures;
+	FilterMode blurCurvaturesMode;
+	boolean blurNormals;
+	FilterMode blurNormalsMode;
+	r32 curvatureBlurSS;
+	r32 curvatureBlurSR;
+	r32 normalsBlurSS;
+	r32 normalsBlurSR;
 };
 
 extern GeometryImage filterGeometryImageFilter(

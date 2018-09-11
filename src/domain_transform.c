@@ -2,6 +2,47 @@
 #include "gim.h"
 #include <assert.h>
 
+static Vec4* blurNormals(const GeometryImage* gim, r32 ss, r32 sr, FilterMode blurMode)
+{
+	Vec4* blurredNormals = malloc(sizeof(Vec4) * gim->img.width * gim->img.height);
+
+	// filter properties currently being used to perform the blur
+	const s32 blurIterations = 3;
+
+	// blurMode can't be CURVATURE_FILTER because it would result in an infinite loop
+	assert(blurMode != CURVATURE_FILTER);
+
+	// To properly use the filter, we need to wrap the normals using a "fake geometry image"
+	GeometryImage normalsGim = {0};
+	normalsGim.img.channels = 4;
+	normalsGim.img.width = gim->img.width;
+	normalsGim.img.height = gim->img.height;
+	normalsGim.img.data = malloc(sizeof(Vec4) * gim->img.width * gim->img.height * 3);
+
+	// Fill the fake geometry image with the horizontal domain transforms
+	// We will fill all three channels with the domain transform value
+	for (s32 i = 0; i < normalsGim.img.height; ++i)
+		for (s32 j = 0; j < normalsGim.img.width; ++j)
+		{
+			Vec4 currentNormal = gim->normals[i * normalsGim.img.width + j];
+			*(Vec4*)&normalsGim.img.data[i * normalsGim.img.width * normalsGim.img.channels + j * normalsGim.img.channels] = currentNormal;
+		}
+
+	// Blur the fake geometry image 
+	GeometryImage resultGim = filterGeometryImageFilter(&normalsGim, blurIterations, ss, sr, blurMode, 0);
+
+	// Store results
+	for (s32 i = 0; i < normalsGim.img.height; ++i)
+		for (s32 j = 0; j < normalsGim.img.width; ++j)
+			blurredNormals[i * normalsGim.img.width + j] =
+				*(Vec4*)&resultGim.img.data[i * resultGim.img.width * resultGim.img.channels + j * resultGim.img.channels];
+
+	free(normalsGim.img.data);
+	gimFreeGeometryImage(&resultGim);
+
+	return blurredNormals;
+}
+
 // Blur domain transforms
 static void blurDomainTransform(const GeometryImage* gim, DomainTransform domainTransform, r32 ss, r32 sr, FilterMode blurMode)
 {
@@ -62,6 +103,7 @@ static void blurDomainTransform(const GeometryImage* gim, DomainTransform domain
 // Calculates and stores the domain transform of pixel 'currentPixel'
 static r32 fillDomainTransform(
 	const GeometryImage* gim,
+	const Vec4* normals,
 	r32* dt,
     DiscreteVec2 currentPixel,
     DiscreteVec2 lastPixel,
@@ -92,8 +134,8 @@ static r32 fillDomainTransform(
         lastPixelVal = *(Vec3*)&gim->img.data[lastPixel.y * gim->img.width * gim->img.channels + lastPixel.x * gim->img.channels];
 
         // Get normals
-		currentNormal = gim->normals[currentPixel.y * gim->img.width + currentPixel.x];
-        lastNormal = gim->normals[lastPixel.y * gim->img.width + lastPixel.x];
+		currentNormal = normals[currentPixel.y * gim->img.width + currentPixel.x];
+        lastNormal = normals[lastPixel.y * gim->img.width + lastPixel.x];
 
         // Normalize normals
         currentNormal = gmNormalizeVec4(currentNormal);
@@ -157,9 +199,17 @@ extern DomainTransform dtGenerateDomainTransforms(
 	DomainTransform domainTransform;
     DiscreteVec2 nextPixel, currentPixel, lastPixel, penultPixel;
     r32 lastValue;
+	// Normals are already defined inside the geometry image.
+	// However, we create this new array because they may be blurred to filter and we do not want to modify geometry image's normals
+	Vec4* normals;
 
 	domainTransform.vertical = malloc(sizeof(r32) * gim->img.width * gim->img.height);
 	domainTransform.horizontal = malloc(sizeof(r32) * gim->img.width * gim->img.height);
+
+	if (blurInformation && blurInformation->blurNormals)
+		normals = blurNormals(gim, blurInformation->normalsBlurSS, blurInformation->normalsBlurSR, blurInformation->blurNormalsMode);
+	else
+		normals = gim->normals;
 
     // HORIZONTAL STEP
 	for (s32 i = 1; i < gim->img.height - 1; ++i)
@@ -181,7 +231,7 @@ extern DomainTransform dtGenerateDomainTransforms(
 		for (s32 j = 0; j < gim->img.width; ++j)
 		{
             currentPixel = (DiscreteVec2) {j, i};
-            lastValue = fillDomainTransform(gim, domainTransform.horizontal, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
+            lastValue = fillDomainTransform(gim, normals, domainTransform.horizontal, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
             penultPixel = lastPixel;
             lastPixel = currentPixel;
 		}
@@ -205,7 +255,7 @@ extern DomainTransform dtGenerateDomainTransforms(
 		for (s32 i = 0; i < gim->img.height; ++i)
 		{
             currentPixel = (DiscreteVec2) {j, i};
-            lastValue = fillDomainTransform(gim, domainTransform.vertical, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
+            lastValue = fillDomainTransform(gim, normals, domainTransform.vertical, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
             penultPixel = lastPixel;
             lastPixel = currentPixel;
 		}
@@ -223,7 +273,7 @@ extern DomainTransform dtGenerateDomainTransforms(
 	for (s32 i = 0; i < gim->img.height; ++i)
 	{
         currentPixel = (DiscreteVec2) {halfWidth, i};
-        lastValue = fillDomainTransform(gim, domainTransform.vertical, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
+        lastValue = fillDomainTransform(gim, normals, domainTransform.vertical, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
         penultPixel = lastPixel;
         lastPixel = currentPixel;
 	}
@@ -234,7 +284,7 @@ extern DomainTransform dtGenerateDomainTransforms(
 		s32 mirrorXBorder = gim->img.width - 1 - j;
 
         currentPixel = (DiscreteVec2) {j, gim->img.height - 1};
-        lastValue = fillDomainTransform(gim, domainTransform.horizontal, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
+        lastValue = fillDomainTransform(gim, normals, domainTransform.horizontal, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
         penultPixel = lastPixel;
         lastPixel = currentPixel;
 	}
@@ -245,7 +295,7 @@ extern DomainTransform dtGenerateDomainTransforms(
 		s32 mirrorXBorder = gim->img.width - 1 - j;
 
         currentPixel = (DiscreteVec2) {j, 0};
-        lastValue = fillDomainTransform(gim, domainTransform.horizontal, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
+        lastValue = fillDomainTransform(gim, normals, domainTransform.horizontal, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
         penultPixel = lastPixel;
         lastPixel = currentPixel;
 	}
@@ -262,7 +312,7 @@ extern DomainTransform dtGenerateDomainTransforms(
 	for (s32 j = 0; j < gim->img.width; ++j)
 	{
         currentPixel = (DiscreteVec2) {j, halfHeight};
-        lastValue = fillDomainTransform(gim, domainTransform.horizontal, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
+        lastValue = fillDomainTransform(gim, normals, domainTransform.horizontal, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
         penultPixel = lastPixel;
         lastPixel = currentPixel;
 	}
@@ -273,7 +323,7 @@ extern DomainTransform dtGenerateDomainTransforms(
 		s32 mirrorYBorder = gim->img.height - 1 - i;
 
         currentPixel = (DiscreteVec2) {gim->img.width - 1, i};
-        lastValue = fillDomainTransform(gim, domainTransform.vertical, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
+        lastValue = fillDomainTransform(gim, normals, domainTransform.vertical, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
         penultPixel = lastPixel;
         lastPixel = currentPixel;
 	}
@@ -284,14 +334,14 @@ extern DomainTransform dtGenerateDomainTransforms(
 		s32 mirrorYBorder = gim->img.height - 1 - i;
 
         currentPixel = (DiscreteVec2) {0, i};
-        lastValue = fillDomainTransform(gim, domainTransform.vertical, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
+        lastValue = fillDomainTransform(gim, normals, domainTransform.vertical, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
         penultPixel = lastPixel;
         lastPixel = currentPixel;
 	}
 
     // BLUR STEP
-	if (filterMode == CURVATURE_FILTER && blurInformation->useBlur)
-        blurDomainTransform(gim, domainTransform, blurInformation->ss, blurInformation->sr, blurInformation->blurMode);
+	if (filterMode == CURVATURE_FILTER && blurInformation && blurInformation->blurCurvatures)
+        blurDomainTransform(gim, domainTransform, blurInformation->curvatureBlurSS, blurInformation->curvatureBlurSR, blurInformation->blurCurvaturesMode);
 
     // FINAL STEP
 	for (s32 i = 0; i < gim->img.height; ++i)
@@ -300,6 +350,9 @@ extern DomainTransform dtGenerateDomainTransforms(
 			domainTransform.horizontal[i * gim->img.width + j] = 1.0f + (spatialFactor / rangeFactor) * domainTransform.horizontal[i * gim->img.width + j];
 			domainTransform.vertical[i * gim->img.width + j] = 1.0f + (spatialFactor / rangeFactor) * domainTransform.vertical[i * gim->img.width + j];
         }
+
+	if (blurInformation && blurInformation->blurNormals)
+		free(normals);
 
 	return domainTransform;
 }
@@ -314,9 +367,17 @@ extern FloatImageData dtGenerateCurvatureImage(
 	const GeometryImage* gim,
 	r32 spatialFactor,
 	r32 rangeFactor,
-	const BlurInformation* blurInformation)
+	boolean blurCurvatures,
+	r32 blurSS,
+	r32 blurSR)
 {
-	DomainTransform domainTransform = dtGenerateDomainTransforms(gim, CURVATURE_FILTER, spatialFactor, rangeFactor, blurInformation);
+	BlurInformation blurInformation;
+	blurInformation.blurCurvatures = blurCurvatures;
+	blurInformation.blurCurvaturesMode = RECURSIVE_FILTER;
+	blurInformation.blurNormals = false;
+	blurInformation.curvatureBlurSR = blurSR;
+	blurInformation.curvatureBlurSS = blurSS;
+	DomainTransform domainTransform = dtGenerateDomainTransforms(gim, CURVATURE_FILTER, spatialFactor, rangeFactor, &blurInformation);
 
 	// Alloc texture
 	FloatImageData curvatureImage;
@@ -343,6 +404,44 @@ extern FloatImageData dtGenerateCurvatureImage(
 	}
 
 	dtDeleteDomainTransforms(domainTransform);
+
+	return curvatureImage;
+}
+
+extern FloatImageData dtGenerateNormalImage(
+	const GeometryImage* gim,
+	boolean shouldBlurNormals,
+	r32 blurSS,
+	r32 blurSR)
+{
+	Vec4* normals;
+
+	if (shouldBlurNormals)
+		normals = blurNormals(gim, blurSS, blurSR, RECURSIVE_FILTER);
+	else
+		normals = gim->normals;
+
+	// Alloc texture
+	FloatImageData curvatureImage;
+	curvatureImage.data = malloc(sizeof(r32) * gim->img.width * gim->img.height * 3);
+	curvatureImage.channels = 3;
+	curvatureImage.height = gim->img.height;
+	curvatureImage.width = gim->img.width;
+
+	// Fill texture
+	for (s32 i = 0; i < gim->img.height; ++i)
+		for (s32 j = 0; j < gim->img.width; ++j)
+		{
+			Vec4 normal = *(Vec4*)&normals[i * curvatureImage.width + j];
+
+			// Fill texture's pixel using desired value
+			curvatureImage.data[i * curvatureImage.width * curvatureImage.channels + j * curvatureImage.channels] = normal.x;
+			curvatureImage.data[i * curvatureImage.width * curvatureImage.channels + j * curvatureImage.channels + 1] = normal.y;
+			curvatureImage.data[i * curvatureImage.width * curvatureImage.channels + j * curvatureImage.channels + 2] = normal.z;
+	}
+
+	if (shouldBlurNormals)
+		free(normals);
 
 	return curvatureImage;
 }

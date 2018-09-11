@@ -27,21 +27,31 @@ static void filterRecursiveCallback(r32 ss, s32 n)
 	updateFilteredGimMesh();
 }
 
-static void filterCurvatureCallback(r32 ss, r32 sr, s32 n, s32 blurMode, r32 blurSS, r32 blurSR)
+static void filterCurvatureCallback(r32 ss, r32 sr, s32 n, s32 curvBlurMode, r32 curvBlurSS, r32 curvBlurSR,
+	s32 normalsBlurMode, r32 normalsBlurSS, r32 normalsBlurSR)
 {
+	// Fill blur information
 	BlurInformation blurInformation = {0};
-	if (blurMode == 0)
-		blurInformation.useBlur = false;
-	else
-		blurInformation.useBlur = true;
+	if (curvBlurMode != 0)
+		blurInformation.blurCurvatures = true;
+	if (normalsBlurMode != 0)
+		blurInformation.blurNormals = true;
 
-	if (blurMode == 1)
-		blurInformation.blurMode = RECURSIVE_FILTER;
-	else if (blurMode == 2)
-		blurInformation.blurMode = DISTANCE_FILTER;
+	if (curvBlurMode == 1)
+		blurInformation.blurCurvaturesMode = RECURSIVE_FILTER;
+	else if (curvBlurMode == 2)
+		blurInformation.blurCurvaturesMode = DISTANCE_FILTER;
 	
-	blurInformation.ss = blurSS;
-	blurInformation.sr = blurSR;
+	if (normalsBlurMode == 1)
+		blurInformation.blurNormalsMode = RECURSIVE_FILTER;
+	else if (normalsBlurMode == 2)
+		blurInformation.blurNormalsMode = DISTANCE_FILTER;
+
+	blurInformation.curvatureBlurSS = curvBlurSS;
+	blurInformation.curvatureBlurSR = curvBlurSR;
+
+	blurInformation.normalsBlurSS = normalsBlurSS;
+	blurInformation.normalsBlurSR = normalsBlurSR;
 
 	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, sr, CURVATURE_FILTER, &blurInformation);
 	gimGeometryImageUpdate3D(&filteredGim);
@@ -74,12 +84,7 @@ static void textureChangeCallBack(s32 textureNumber)
 	// Curvature texture w/ blur
 	else if (textureNumber == 1)
 	{
-		BlurInformation blurInformation;
-		blurInformation.blurMode = RECURSIVE_FILTER;
-		blurInformation.ss = 0.8f;
-		blurInformation.sr = 1.0f;
-		blurInformation.useBlur	= true;
-		FloatImageData curvatureImage = dtGenerateCurvatureImage(&noisyGim, 100.0f, 1.0f, &blurInformation);
+		FloatImageData curvatureImage = dtGenerateCurvatureImage(&noisyGim, 100.0f, 1.0f, true, 0.8f, 1.0f);
 		FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
 		graphicsFloatImageSave("./res/curv_w_blur.bmp", &normalizedCurvatureImage);
 		graphicsFloatImageFree(&curvatureImage);
@@ -92,11 +97,35 @@ static void textureChangeCallBack(s32 textureNumber)
 	// Curvature texture wo/ blur
 	else if (textureNumber == 2)
 	{
-		BlurInformation blurInformation;
-		blurInformation.useBlur	= false;
-		FloatImageData curvatureImage = dtGenerateCurvatureImage(&noisyGim, 100.0f, 1.0f, &blurInformation);
+		FloatImageData curvatureImage = dtGenerateCurvatureImage(&noisyGim, 100.0f, 1.0f, false, 0.0f, 0.0f);
 		FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
 		graphicsFloatImageSave("./res/curv_wo_blur.bmp", &normalizedCurvatureImage);
+		graphicsFloatImageFree(&curvatureImage);
+		currentTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
+		//gimCheckGeometryImage(&normalizedCurvatureImage);
+		graphicsFloatImageFree(&normalizedCurvatureImage);
+		graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, false);
+		hasTexture = true;
+	}
+	// Normal texture w/ blur
+	else if (textureNumber == 3)
+	{
+		FloatImageData curvatureImage = dtGenerateNormalImage(&noisyGim, true, 0.9f, 1.0f);
+		FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
+		graphicsFloatImageSave("./res/normals_w_blur.bmp", &normalizedCurvatureImage);
+		graphicsFloatImageFree(&curvatureImage);
+		currentTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
+		//gimCheckGeometryImage(&normalizedCurvatureImage);
+		graphicsFloatImageFree(&normalizedCurvatureImage);
+		graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, false);
+		hasTexture = true;
+	}
+	// Normal texture wo/ blur
+	else if (textureNumber == 4)
+	{
+		FloatImageData curvatureImage = dtGenerateNormalImage(&noisyGim, false, 0.0f, 0.0f);
+		FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
+		graphicsFloatImageSave("./res/normals_wo_blur.bmp", &normalizedCurvatureImage);
 		graphicsFloatImageFree(&curvatureImage);
 		currentTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
 		//gimCheckGeometryImage(&normalizedCurvatureImage);

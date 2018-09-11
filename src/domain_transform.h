@@ -21,7 +21,15 @@ extern FloatImageData dtGenerateCurvatureImage(
 	const GeometryImage* gim,
 	r32 spatialFactor,
 	r32 rangeFactor,
-	const BlurInformation* blurInformation);
+	boolean blurCurvatures,
+	r32 blurSS,
+	r32 blurSR);
+
+extern FloatImageData dtGenerateNormalImage(
+	const GeometryImage* gim,
+	boolean blurNormals,
+	r32 blurSS,
+	r32 blurSR);
 
 extern void dtDeleteDomainTransforms(DomainTransform dt);
 

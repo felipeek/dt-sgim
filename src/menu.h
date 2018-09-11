@@ -5,7 +5,7 @@
 
 typedef void (*RecursiveFilterCallback)(r32, s32);
 typedef void (*DistanceFilterCallback)(r32, r32, s32);
-typedef void (*CurvatureFilterCallback)(r32, r32, s32, s32, r32, r32);
+typedef void (*CurvatureFilterCallback)(r32, r32, s32, s32, r32, r32, s32, r32, r32);
 typedef void (*TextureChangeCallback)(s32);
 typedef void (*NoiseGeneratorCallback)(r32);
 

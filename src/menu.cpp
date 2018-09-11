@@ -13,7 +13,7 @@
 
 typedef void (*RecursiveFilterCallback)(r32, s32);
 typedef void (*DistanceFilterCallback)(r32, r32, s32);
-typedef void (*CurvatureFilterCallback)(r32, r32, s32, s32, r32, r32);
+typedef void (*CurvatureFilterCallback)(r32, r32, s32, s32, r32, r32, s32, r32, r32);
 typedef void (*TextureChangeCallback)(s32);
 typedef void (*NoiseGeneratorCallback)(r32);
 
@@ -133,20 +133,32 @@ static void drawMainWindow()
         static r32 curvatureBlurRangeFactor = 0.0f;
         static s32 curvatureBlurMode = 0;
         
+        static r32 normalsSpatialFactor = 0.0f;
+        static r32 normalsRangeFactor = 0.0f;
+        static s32 normalsNumberOfIterations = 3;
+        static r32 normalsBlurSpatialFactor = 0.0f;
+        static r32 normalsBlurRangeFactor = 0.0f;
+        static s32 normalsBlurMode = 0;
+
         ImGui::DragFloat("Spatial Factor##curvature", &curvatureSpatialFactor, 0.1f, 0.0f, 100.0f);
         ImGui::DragFloat("Range Factor##curvature", &curvatureRangeFactor, 0.02f, 0.0f, 2.0f);
         ImGui::DragInt("Number of Iterations##curvature", &curvatureNumberOfIterations, 0.02f, 1, 10);
 
-        const s8* items[] = { "No blur", "Recursive blur", "Distance blur" };
-        ImGui::Combo("Blur Mode##curvature", &curvatureBlurMode, items, IM_ARRAYSIZE(items));
-        ImGui::DragFloat("Blur Spatial Factor##curvature", &curvatureBlurSpatialFactor, 0.1f, 0.0f, 100.0f);
-        ImGui::DragFloat("Blur Range Factor##curvature", &curvatureBlurRangeFactor, 0.02f, 0.0f, 2.0f);
+        const s8* blurModes[] = { "No blur", "Recursive blur", "Distance blur" };
+        ImGui::Combo("Curvature Blur Mode##curvature", &curvatureBlurMode, blurModes, IM_ARRAYSIZE(blurModes));
+        ImGui::DragFloat("Curvature Blur Spatial Factor##curvature", &curvatureBlurSpatialFactor, 0.1f, 0.0f, 100.0f);
+        ImGui::DragFloat("Curvature Blur Range Factor##curvature", &curvatureBlurRangeFactor, 0.02f, 0.0f, 2.0f);
+
+        ImGui::Combo("Normals Blur Mode##curvature", &normalsBlurMode, blurModes, IM_ARRAYSIZE(blurModes));
+        ImGui::DragFloat("Normals Blur Spatial Factor##curvature", &normalsBlurSpatialFactor, 0.1f, 0.0f, 100.0f);
+        ImGui::DragFloat("Normals Blur Range Factor##curvature", &normalsBlurRangeFactor, 0.02f, 0.0f, 2.0f);
 
         if (ImGui::Button("Filter##curvature"))
         {
             if (curvatureFilterCallback)
                 curvatureFilterCallback(curvatureSpatialFactor, curvatureRangeFactor, curvatureNumberOfIterations,
-                    curvatureBlurMode, curvatureBlurSpatialFactor, curvatureBlurRangeFactor);
+                    curvatureBlurMode, curvatureBlurSpatialFactor, curvatureBlurRangeFactor, normalsBlurMode, normalsBlurSpatialFactor,
+                    normalsBlurRangeFactor);
         }
     }
     
@@ -164,9 +176,11 @@ static void drawMainWindow()
     if (ImGui::CollapsingHeader("Texture"))
     {
         static s32 radioSelection = 0;
-        ImGui::RadioButton("Solid", &radioSelection, 0); ImGui::SameLine();
-        ImGui::RadioButton("Curvature (w/ blur)", &radioSelection, 1); ImGui::SameLine();
-        ImGui::RadioButton("Curvature (wo/ blur)", &radioSelection, 2);
+        ImGui::RadioButton("Solid##texture", &radioSelection, 0);
+        ImGui::RadioButton("Curvature (w/ blur)##texture", &radioSelection, 1);
+        ImGui::RadioButton("Curvature (wo/ blur)##texture", &radioSelection, 2);
+        ImGui::RadioButton("Normals (w/ blur)##texture", &radioSelection, 3);
+        ImGui::RadioButton("Normals (wo/ blur)##texture", &radioSelection, 4);
 
         if (ImGui::Button("Apply##texture"))
         {
