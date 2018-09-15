@@ -460,7 +460,7 @@ static void filterCStep(
 	{
 		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
 		{
-			r32 d = (i == originalGim->img.height - 1) ? domainTransform.horizontal[i * originalGim->img.width + halfWidth] : domainTransform.vertical[(i + 1) * originalGim->img.width + halfWidth];
+			r32 d = (i == originalGim->img.height - 1) ? domainTransform.horizontal[i * originalGim->img.width + (halfWidth + 1)] : domainTransform.vertical[(i + 1) * originalGim->img.width + halfWidth];
 			recursiveFactor = powf(rfCoefficients[currentIteration], d);
 		}
 		else
@@ -756,7 +756,7 @@ static void filterPiStep(
 	{
 		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
 		{
-			r32 d = (j == originalGim->img.width - 1) ? domainTransform.vertical[halfHeight * originalGim->img.width + j] :
+			r32 d = (j == originalGim->img.width - 1) ? domainTransform.vertical[(halfHeight + 1) * originalGim->img.width + j] :
 				domainTransform.horizontal[halfHeight * originalGim->img.width + (j + 1)];
 			recursiveFactor = powf(rfCoefficients[currentIteration], d);
 		}

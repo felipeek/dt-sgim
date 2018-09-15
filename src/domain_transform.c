@@ -272,8 +272,11 @@ extern DomainTransform dtGenerateDomainTransforms(
 	// Filter from (half, tBorder) to (half, bBorder)
 	for (s32 i = 0; i < gim->img.height; ++i)
 	{
+		// If (i == 0), we want to consider the domain transform as a horizontal domain transform
+		// The last pixel will be to the right of the current pixel
+		r32* dt = (i == 0) ? domainTransform.horizontal : domainTransform.vertical;
         currentPixel = (DiscreteVec2) {halfWidth, i};
-        lastValue = fillDomainTransform(gim, normals, domainTransform.vertical, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
+        lastValue = fillDomainTransform(gim, normals, dt, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
         penultPixel = lastPixel;
         lastPixel = currentPixel;
 	}
@@ -311,8 +314,11 @@ extern DomainTransform dtGenerateDomainTransforms(
 	// Filter from (lBorder, half) to (rBorder, half)
 	for (s32 j = 0; j < gim->img.width; ++j)
 	{
+		// If (j == 0), we want to consider the domain transform as a vertical domain transform
+		// The last pixel will be on the bottom of the current pixel
+		r32* dt = (j == 0) ? domainTransform.vertical : domainTransform.horizontal;
         currentPixel = (DiscreteVec2) {j, halfHeight};
-        lastValue = fillDomainTransform(gim, normals, domainTransform.horizontal, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
+        lastValue = fillDomainTransform(gim, normals, dt, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor, filterMode);
         penultPixel = lastPixel;
         lastPixel = currentPixel;
 	}
