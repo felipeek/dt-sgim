@@ -94,10 +94,9 @@ static void drawMainWindow()
 
     if (ImGui::CollapsingHeader("Recursive Filter"))
     {
-        static r32 recursiveSpatialFactor = 0.0f;
-        static r32 recursiveRangeFactor = 0.0f;
+        static r32 recursiveSpatialFactor = 0.8f;
         static s32 recursiveNumberOfIterations = 3;
-        ImGui::DragFloat("Spatial Factor##recursive", &recursiveSpatialFactor, 0.001f, 0.0f, 1.0f);
+        ImGui::DragFloat("Spatial Factor##recursive", &recursiveSpatialFactor, 0.002f, 0.0f, 1.0f);
         ImGui::DragInt("Number of Iterations##recursive", &recursiveNumberOfIterations, 0.02f, 1, 10);
 
         if (ImGui::Button("Filter##recursive"))
@@ -109,11 +108,11 @@ static void drawMainWindow()
 
     if (ImGui::CollapsingHeader("Distance Filter"))
     {
-        static r32 distanceSpatialFactor = 0.0f;
-        static r32 distanceRangeFactor = 0.0f;
+        static r32 distanceSpatialFactor = 7.0f;
+        static r32 distanceRangeFactor = 0.1f;
         static s32 distanceNumberOfIterations = 3;
         ImGui::DragFloat("Spatial Factor##distance", &distanceSpatialFactor, 0.1f, 0.0f, 100.0f);
-        ImGui::DragFloat("Range Factor##distance", &distanceRangeFactor, 0.02f, 0.0f, 2.0f);
+        ImGui::DragFloat("Range Factor##distance", &distanceRangeFactor, 0.002f, 0.0f, 2.0f);
         ImGui::DragInt("Number of Iterations##distance", &distanceNumberOfIterations, 0.02f, 1, 10);
 
 
@@ -126,8 +125,8 @@ static void drawMainWindow()
 
     if (ImGui::CollapsingHeader("Curvature Filter"))
     {
-        static r32 curvatureSpatialFactor = 0.0f;
-        static r32 curvatureRangeFactor = 0.0f;
+        static r32 curvatureSpatialFactor = 50.0f;
+        static r32 curvatureRangeFactor = 0.2f;
         static s32 curvatureNumberOfIterations = 3;
         static r32 curvatureBlurSpatialFactor = 0.0f;
         static r32 curvatureBlurRangeFactor = 0.0f;
@@ -136,22 +135,22 @@ static void drawMainWindow()
         static r32 normalsSpatialFactor = 0.0f;
         static r32 normalsRangeFactor = 0.0f;
         static s32 normalsNumberOfIterations = 3;
-        static r32 normalsBlurSpatialFactor = 0.0f;
+        static r32 normalsBlurSpatialFactor = 0.9f;
         static r32 normalsBlurRangeFactor = 0.0f;
-        static s32 normalsBlurMode = 0;
+        static s32 normalsBlurMode = 1;
 
         ImGui::DragFloat("Spatial Factor##curvature", &curvatureSpatialFactor, 0.1f, 0.0f, 100.0f);
-        ImGui::DragFloat("Range Factor##curvature", &curvatureRangeFactor, 0.02f, 0.0f, 2.0f);
+        ImGui::DragFloat("Range Factor##curvature", &curvatureRangeFactor, 0.002f, 0.0f, 2.0f);
         ImGui::DragInt("Number of Iterations##curvature", &curvatureNumberOfIterations, 0.02f, 1, 10);
 
         const s8* blurModes[] = { "No blur", "Recursive blur", "Distance blur" };
         ImGui::Combo("Curvature Blur Mode##curvature", &curvatureBlurMode, blurModes, IM_ARRAYSIZE(blurModes));
-        ImGui::DragFloat("Curvature Blur Spatial Factor##curvature", &curvatureBlurSpatialFactor, 0.1f, 0.0f, 100.0f);
-        ImGui::DragFloat("Curvature Blur Range Factor##curvature", &curvatureBlurRangeFactor, 0.02f, 0.0f, 2.0f);
+        if (curvatureBlurMode > 0)  ImGui::DragFloat("Curvature Blur Spatial Factor##curvature", &curvatureBlurSpatialFactor, 0.1f, 0.0f, 100.0f);
+        if (curvatureBlurMode > 1)  ImGui::DragFloat("Curvature Blur Range Factor##curvature", &curvatureBlurRangeFactor, 0.02f, 0.0f, 2.0f);
 
         ImGui::Combo("Normals Blur Mode##curvature", &normalsBlurMode, blurModes, IM_ARRAYSIZE(blurModes));
-        ImGui::DragFloat("Normals Blur Spatial Factor##curvature", &normalsBlurSpatialFactor, 0.1f, 0.0f, 100.0f);
-        ImGui::DragFloat("Normals Blur Range Factor##curvature", &normalsBlurRangeFactor, 0.02f, 0.0f, 2.0f);
+        if (normalsBlurMode > 0)    ImGui::DragFloat("Normals Blur Spatial Factor##curvature", &normalsBlurSpatialFactor, 0.1f, 0.0f, 100.0f);
+        if (normalsBlurMode > 1)    ImGui::DragFloat("Normals Blur Range Factor##curvature", &normalsBlurRangeFactor, 0.02f, 0.0f, 2.0f);
 
         if (ImGui::Button("Filter##curvature"))
         {
