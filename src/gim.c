@@ -255,6 +255,17 @@ extern void gimNormalizeAndSave(const GeometryImage* gim, const s8* imagePath)
 	graphicsFloatImageFree(&normalizedTexture);
 }
 
+static Vec3 generateNoiseVector(r32 weight)
+{
+	Vec3 r;
+	r.x = utilRandomFloat(-1.0f, 1.0f);
+	r.y = utilRandomFloat(-1.0f, 1.0f);
+	r.z = utilRandomFloat(-1.0f, 1.0f);
+	r = gmNormalizeVec3(r);
+	r32 a = utilRandomFloat(-weight, weight);
+	return gmScalarProductVec3(a, r);
+}
+
 extern GeometryImage gimAddNoise(const GeometryImage* gim, r32 noiseIntensity)
 {
 	GeometryImage noisyGim = gimCopyGeometryImage(gim, false);
@@ -266,9 +277,7 @@ extern GeometryImage gimAddNoise(const GeometryImage* gim, r32 noiseIntensity)
 		for (s32 j = 1; j < noisyGim.img.width - 1; ++j)
 		{
 			Vec3 vertex = *(Vec3*)&noisyGim.img.data[i * noisyGim.img.width * noisyGim.img.channels + j * noisyGim.img.channels];
-			vertex.x += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
-			vertex.y += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
-			vertex.z += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
+			vertex = gmAddVec3(vertex, generateNoiseVector(noiseWeightNormalized));
 			*(Vec3*)&noisyGim.img.data[i * noisyGim.img.width * noisyGim.img.channels + j * noisyGim.img.channels] = vertex;
 		}
 
@@ -278,16 +287,12 @@ extern GeometryImage gimAddNoise(const GeometryImage* gim, r32 noiseIntensity)
 		s32 mirrorYPosition = noisyGim.img.height - i - 1;
 
 		Vec3 vertex = *(Vec3*)&noisyGim.img.data[i * noisyGim.img.width * noisyGim.img.channels + 0 * noisyGim.img.channels];
-		vertex.x += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
-		vertex.y += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
-		vertex.z += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
+		vertex = gmAddVec3(vertex, generateNoiseVector(noiseWeightNormalized));
 		*(Vec3*)&noisyGim.img.data[i * noisyGim.img.width * noisyGim.img.channels + 0 * noisyGim.img.channels] = vertex;
 		*(Vec3*)&noisyGim.img.data[mirrorYPosition * noisyGim.img.width * noisyGim.img.channels + 0 * noisyGim.img.channels] = vertex;
 
 		vertex = *(Vec3*)&noisyGim.img.data[i * noisyGim.img.width * noisyGim.img.channels + (noisyGim.img.width - 1) * noisyGim.img.channels];
-		vertex.x += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
-		vertex.y += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
-		vertex.z += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
+		vertex = gmAddVec3(vertex, generateNoiseVector(noiseWeightNormalized));
 		*(Vec3*)&noisyGim.img.data[i * noisyGim.img.width * noisyGim.img.channels + (noisyGim.img.width - 1) * noisyGim.img.channels] = vertex;
 		*(Vec3*)&noisyGim.img.data[mirrorYPosition * noisyGim.img.width * noisyGim.img.channels + (noisyGim.img.width - 1) * noisyGim.img.channels] = vertex;
 	}
@@ -298,25 +303,19 @@ extern GeometryImage gimAddNoise(const GeometryImage* gim, r32 noiseIntensity)
 		s32 mirrorXPosition = noisyGim.img.width - j - 1;
 
 		Vec3 vertex = *(Vec3*)&noisyGim.img.data[0 * noisyGim.img.width * noisyGim.img.channels + j * noisyGim.img.channels];
-		vertex.x += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
-		vertex.y += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
-		vertex.z += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
+		vertex = gmAddVec3(vertex, generateNoiseVector(noiseWeightNormalized));
 		*(Vec3*)&noisyGim.img.data[0 * noisyGim.img.width * noisyGim.img.channels + j * noisyGim.img.channels] = vertex;
 		*(Vec3*)&noisyGim.img.data[0 * noisyGim.img.width * noisyGim.img.channels + mirrorXPosition * noisyGim.img.channels] = vertex;
 
 		vertex = *(Vec3*)&noisyGim.img.data[(noisyGim.img.height - 1) * noisyGim.img.width * noisyGim.img.channels + j * noisyGim.img.channels];
-		vertex.x += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
-		vertex.y += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
-		vertex.z += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
+		vertex = gmAddVec3(vertex, generateNoiseVector(noiseWeightNormalized));
 		*(Vec3*)&noisyGim.img.data[(noisyGim.img.height - 1) * noisyGim.img.width * noisyGim.img.channels + j * noisyGim.img.channels] = vertex;
 		*(Vec3*)&noisyGim.img.data[(noisyGim.img.height - 1) * noisyGim.img.width * noisyGim.img.channels + mirrorXPosition * noisyGim.img.channels] = vertex;
 	}
 
 	// Add noise to corner vertices
 	Vec3 vertex = *(Vec3*)&noisyGim.img.data[0 * noisyGim.img.width * noisyGim.img.channels + 0 * noisyGim.img.channels];
-	vertex.x += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
-	vertex.y += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
-	vertex.z += utilRandomFloat(-1.0f, 1.0f) * noiseWeightNormalized;
+	vertex = gmAddVec3(vertex, generateNoiseVector(noiseWeightNormalized));
 	*(Vec3*)&noisyGim.img.data[0 * noisyGim.img.width * noisyGim.img.channels + 0 * noisyGim.img.channels] = vertex;
 	*(Vec3*)&noisyGim.img.data[0 * noisyGim.img.width * noisyGim.img.channels + (noisyGim.img.width - 1) * noisyGim.img.channels] = vertex;
 	*(Vec3*)&noisyGim.img.data[(noisyGim.img.height - 1) * noisyGim.img.width * noisyGim.img.channels + 0 * noisyGim.img.channels] = vertex;
