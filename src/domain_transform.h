@@ -17,17 +17,17 @@ extern DomainTransform dtGenerateDomainTransforms(
 	r32 rangeFactor,
 	const BlurInformation* blurInformation);
 
-extern FloatImageData dtGenerateCurvatureImage(
+extern FloatImageData dtGenerateDomainTransformsImage(
 	const GeometryImage* gim,
+	FilterMode filterMode,
 	r32 spatialFactor,
 	r32 rangeFactor,
-	boolean blurCurvatures,
-	r32 blurSS,
-	r32 blurSR);
+	const BlurInformation* blurInformation);
 
 extern FloatImageData dtGenerateNormalImage(
 	const GeometryImage* gim,
 	boolean blurNormals,
+	FilterMode blurMode,
 	r32 blurSS,
 	r32 blurSR);
 

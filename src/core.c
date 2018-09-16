@@ -68,74 +68,78 @@ static void filterDistanceCallback(r32 ss, r32 sr, s32 n)
 	updateFilteredGimMesh();
 }
 
-static void textureChangeCallBack(s32 textureNumber)
+static void textureChangeSolidCallback()
 {
-	static u32 currentTexture = 0;
-	static boolean hasTexture = false;
+	graphicsMeshChangeColor(&gimEntity.mesh, GIM_ENTITY_COLOR, false);
+}
 
-	if (hasTexture)
-	{
-		graphicsTextureDelete(currentTexture);
-		hasTexture = false;
-	}
+static void textureChangeDistanceCallback(r32 distanceSpatialFactor, r32 distanceRangeFactor)
+{
+	// Fill blur information
+	BlurInformation blurInformation = {0};
+	blurInformation.blurCurvatures = false;
+	blurInformation.blurNormals = false;
 
-	// Solid color
-	if (textureNumber == 0)
-	{
-		graphicsMeshChangeColor(&gimEntity.mesh, GIM_ENTITY_COLOR, false);
-	}
-	// Curvature texture w/ blur
-	else if (textureNumber == 1)
-	{
-		FloatImageData curvatureImage = dtGenerateCurvatureImage(&noisyGim, 100.0f, 1.0f, true, 0.8f, 1.0f);
-		FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
-		graphicsFloatImageSave("./res/curv_w_blur.bmp", &normalizedCurvatureImage);
-		graphicsFloatImageFree(&curvatureImage);
-		currentTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
-		//gimCheckGeometryImage(&normalizedCurvatureImage);
-		graphicsFloatImageFree(&normalizedCurvatureImage);
-		graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, false);
-		hasTexture = true;
-	}
-	// Curvature texture wo/ blur
-	else if (textureNumber == 2)
-	{
-		FloatImageData curvatureImage = dtGenerateCurvatureImage(&noisyGim, 100.0f, 1.0f, false, 0.0f, 0.0f);
-		FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
-		graphicsFloatImageSave("./res/curv_wo_blur.bmp", &normalizedCurvatureImage);
-		graphicsFloatImageFree(&curvatureImage);
-		currentTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
-		//gimCheckGeometryImage(&normalizedCurvatureImage);
-		graphicsFloatImageFree(&normalizedCurvatureImage);
-		graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, false);
-		hasTexture = true;
-	}
-	// Normal texture w/ blur
-	else if (textureNumber == 3)
-	{
-		FloatImageData curvatureImage = dtGenerateNormalImage(&noisyGim, true, 0.9f, 1.0f);
-		FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
-		graphicsFloatImageSave("./res/normals_w_blur.bmp", &normalizedCurvatureImage);
-		graphicsFloatImageFree(&curvatureImage);
-		currentTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
-		//gimCheckGeometryImage(&normalizedCurvatureImage);
-		graphicsFloatImageFree(&normalizedCurvatureImage);
-		graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, false);
-		hasTexture = true;
-	}
-	// Normal texture wo/ blur
-	else if (textureNumber == 4)
-	{
-		FloatImageData curvatureImage = dtGenerateNormalImage(&noisyGim, false, 0.0f, 0.0f);
-		FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
-		graphicsFloatImageSave("./res/normals_wo_blur.bmp", &normalizedCurvatureImage);
-		graphicsFloatImageFree(&curvatureImage);
-		currentTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
-		//gimCheckGeometryImage(&normalizedCurvatureImage);
-		graphicsFloatImageFree(&normalizedCurvatureImage);
-		graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, false);
-		hasTexture = true;
-	}
+	FloatImageData curvatureImage = dtGenerateDomainTransformsImage(&noisyGim, DISTANCE_FILTER, distanceSpatialFactor,
+		distanceRangeFactor, &blurInformation);
+	FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
+	graphicsFloatImageSave("./res/distances.bmp", &normalizedCurvatureImage);
+	graphicsFloatImageFree(&curvatureImage);
+	s32 currentTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
+	//gimCheckGeometryImage(&normalizedCurvatureImage);
+	graphicsFloatImageFree(&normalizedCurvatureImage);
+	graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, true);
+}
+
+static void textureChangeCurvatureCallback(r32 curvatureSpatialFactor, r32 curvatureRangeFactor, s32 curvatureBlurMode,
+	r32 curvatureBlurSpatialFactor, r32 curvatureBlurRangeFactor, s32 normalsBlurMode, r32 normalsBlurSpatialFactor, r32 normalsBlurRangeFactor)
+{
+	// Fill blur information
+	BlurInformation blurInformation = {0};
+	if (curvatureBlurMode != 0)
+		blurInformation.blurCurvatures = true;
+	if (normalsBlurMode != 0)
+		blurInformation.blurNormals = true;
+
+	if (curvatureBlurMode == 1)
+		blurInformation.blurCurvaturesMode = RECURSIVE_FILTER;
+	else if (curvatureBlurMode == 2)
+		blurInformation.blurCurvaturesMode = DISTANCE_FILTER;
+	
+	if (normalsBlurMode == 1)
+		blurInformation.blurNormalsMode = RECURSIVE_FILTER;
+	else if (normalsBlurMode == 2)
+		blurInformation.blurNormalsMode = DISTANCE_FILTER;
+
+	blurInformation.curvatureBlurSS = curvatureBlurSpatialFactor;
+	blurInformation.curvatureBlurSR = curvatureBlurRangeFactor;
+
+	blurInformation.normalsBlurSS = normalsBlurSpatialFactor;
+	blurInformation.normalsBlurSR = normalsBlurRangeFactor;
+
+	FloatImageData curvatureImage = dtGenerateDomainTransformsImage(&noisyGim, CURVATURE_FILTER, curvatureSpatialFactor,
+		curvatureRangeFactor, &blurInformation);
+	FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
+	graphicsFloatImageSave("./res/curvatures.bmp", &normalizedCurvatureImage);
+	graphicsFloatImageFree(&curvatureImage);
+	s32 currentTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
+	//gimCheckGeometryImage(&normalizedCurvatureImage);
+	graphicsFloatImageFree(&normalizedCurvatureImage);
+	graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, true);
+}
+
+static void textureChangeNormalsCallback(s32 normalsBlurMode, r32 normalsBlurSpatialFactor, r32 normalsBlurRangeFactor)
+{
+	boolean shouldBlurNormals = normalsBlurMode > 0;
+	FilterMode blurMode = (normalsBlurMode == 1) ? RECURSIVE_FILTER : DISTANCE_FILTER;
+	FloatImageData curvatureImage = dtGenerateNormalImage(&noisyGim, shouldBlurNormals, blurMode, normalsBlurSpatialFactor, normalsBlurRangeFactor);
+	FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
+	graphicsFloatImageSave("./res/normals.bmp", &normalizedCurvatureImage);
+	graphicsFloatImageFree(&curvatureImage);
+	s32 currentTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
+	//gimCheckGeometryImage(&normalizedCurvatureImage);
+	graphicsFloatImageFree(&normalizedCurvatureImage);
+	graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, true);
 }
 
 static void noiseGeneratorCallback(r32 intensity)
@@ -154,7 +158,10 @@ static void registerMenuCallbacks()
 	menuRegisterRecursiveFilterCallBack(filterRecursiveCallback);
 	menuRegisterCurvatureFilterCallBack(filterCurvatureCallback);
 	menuRegisterDistanceFilterCallBack(filterDistanceCallback);
-	menuRegisterTextureChangeCallBack(textureChangeCallBack);
+	menuRegisterTextureChangeSolidCallBack(textureChangeSolidCallback);
+	menuRegisterTextureChangeDistanceCallBack(textureChangeDistanceCallback);
+	menuRegisterTextureChangeCurvatureCallBack(textureChangeCurvatureCallback);
+	menuRegisterTextureChangeNormalsCallBack(textureChangeNormalsCallback);
 	menuRegisterNoiseGeneratorCallBack(noiseGeneratorCallback);
 }
 

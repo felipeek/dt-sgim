@@ -14,13 +14,19 @@
 typedef void (*RecursiveFilterCallback)(r32, s32);
 typedef void (*DistanceFilterCallback)(r32, r32, s32);
 typedef void (*CurvatureFilterCallback)(r32, r32, s32, s32, r32, r32, s32, r32, r32);
-typedef void (*TextureChangeCallback)(s32);
+typedef void (*TextureChangeSolidCallback)();
+typedef void (*TextureChangeDistanceCallback)(r32, r32);
+typedef void (*TextureChangeCurvatureCallback)(r32, r32, s32, r32, r32, s32, r32, r32);
+typedef void (*TextureChangeNormalsCallback)(s32, r32, r32);
 typedef void (*NoiseGeneratorCallback)(r32);
 
 static RecursiveFilterCallback recursiveFilterCallback;
 static DistanceFilterCallback distanceFilterCallback;
 static CurvatureFilterCallback curvatureFilterCallback;
-static TextureChangeCallback textureChangeCallback;
+static TextureChangeSolidCallback textureChangeSolidCallback;
+static TextureChangeDistanceCallback textureChangeDistanceCallback;
+static TextureChangeCurvatureCallback textureChangeCurvatureCallback;
+static TextureChangeNormalsCallback textureChangeNormalsCallback;
 static NoiseGeneratorCallback noiseGeneratorCallback;
 
 extern "C" void menuRegisterRecursiveFilterCallBack(RecursiveFilterCallback f)
@@ -38,9 +44,24 @@ extern "C" void menuRegisterCurvatureFilterCallBack(CurvatureFilterCallback f)
     curvatureFilterCallback = f;
 }
 
-extern "C" void menuRegisterTextureChangeCallBack(TextureChangeCallback f)
+extern "C" void menuRegisterTextureChangeSolidCallBack(TextureChangeSolidCallback f)
 {
-    textureChangeCallback = f;
+    textureChangeSolidCallback = f;
+}
+
+extern "C" void menuRegisterTextureChangeDistanceCallBack(TextureChangeDistanceCallback f)
+{
+    textureChangeDistanceCallback = f;
+}
+
+extern "C" void menuRegisterTextureChangeCurvatureCallBack(TextureChangeCurvatureCallback f)
+{
+    textureChangeCurvatureCallback = f;
+}
+
+extern "C" void menuRegisterTextureChangeNormalsCallBack(TextureChangeNormalsCallback f)
+{
+    textureChangeNormalsCallback = f;
 }
 
 extern "C" void menuRegisterNoiseGeneratorCallBack(NoiseGeneratorCallback f)
@@ -84,6 +105,29 @@ extern "C" void menuInit(GLFWwindow* window)
 
 static void drawMainWindow()
 {
+    static r32 recursiveSpatialFactor = 0.8f;
+    static s32 recursiveNumberOfIterations = 3;
+
+    static r32 distanceSpatialFactor = 7.0f;
+    static r32 distanceRangeFactor = 0.1f;
+    static s32 distanceNumberOfIterations = 3;
+
+    static r32 curvatureSpatialFactor = 50.0f;
+    static r32 curvatureRangeFactor = 0.2f;
+    static s32 curvatureNumberOfIterations = 3;
+    static r32 curvatureBlurSpatialFactor = 0.0f;
+    static r32 curvatureBlurRangeFactor = 0.0f;
+    static s32 curvatureBlurMode = 0;
+    
+    static s32 normalsNumberOfIterations = 3;
+    static r32 normalsBlurSpatialFactor = 0.9f;
+    static r32 normalsBlurRangeFactor = 0.0f;
+    static s32 normalsBlurMode = 1;
+
+    static r32 noiseIntensity = 0.0f;
+
+    static s32 textureRadioSelection = 0;
+
     // Main body of the Demo window starts here.
     if (!ImGui::Begin(MENU_TITLE, 0, 0))
     {
@@ -94,8 +138,6 @@ static void drawMainWindow()
 
     if (ImGui::CollapsingHeader("Recursive Filter"))
     {
-        static r32 recursiveSpatialFactor = 0.8f;
-        static s32 recursiveNumberOfIterations = 3;
         ImGui::DragFloat("Spatial Factor##recursive", &recursiveSpatialFactor, 0.002f, 0.0f, 1.0f);
         ImGui::DragInt("Number of Iterations##recursive", &recursiveNumberOfIterations, 0.02f, 1, 10);
 
@@ -108,9 +150,6 @@ static void drawMainWindow()
 
     if (ImGui::CollapsingHeader("Distance Filter"))
     {
-        static r32 distanceSpatialFactor = 7.0f;
-        static r32 distanceRangeFactor = 0.1f;
-        static s32 distanceNumberOfIterations = 3;
         ImGui::DragFloat("Spatial Factor##distance", &distanceSpatialFactor, 0.1f, 0.0f, 100.0f);
         ImGui::DragFloat("Range Factor##distance", &distanceRangeFactor, 0.002f, 0.0f, 2.0f);
         ImGui::DragInt("Number of Iterations##distance", &distanceNumberOfIterations, 0.02f, 1, 10);
@@ -125,19 +164,6 @@ static void drawMainWindow()
 
     if (ImGui::CollapsingHeader("Curvature Filter"))
     {
-        static r32 curvatureSpatialFactor = 50.0f;
-        static r32 curvatureRangeFactor = 0.2f;
-        static s32 curvatureNumberOfIterations = 3;
-        static r32 curvatureBlurSpatialFactor = 0.0f;
-        static r32 curvatureBlurRangeFactor = 0.0f;
-        static s32 curvatureBlurMode = 0;
-        
-        static r32 normalsSpatialFactor = 0.0f;
-        static r32 normalsRangeFactor = 0.0f;
-        static s32 normalsNumberOfIterations = 3;
-        static r32 normalsBlurSpatialFactor = 0.9f;
-        static r32 normalsBlurRangeFactor = 0.0f;
-        static s32 normalsBlurMode = 1;
 
         ImGui::DragFloat("Spatial Factor##curvature", &curvatureSpatialFactor, 0.1f, 0.0f, 100.0f);
         ImGui::DragFloat("Range Factor##curvature", &curvatureRangeFactor, 0.002f, 0.0f, 2.0f);
@@ -145,12 +171,28 @@ static void drawMainWindow()
 
         const s8* blurModes[] = { "No blur", "Recursive blur", "Distance blur" };
         ImGui::Combo("Curvature Blur Mode##curvature", &curvatureBlurMode, blurModes, IM_ARRAYSIZE(blurModes));
-        if (curvatureBlurMode > 0)  ImGui::DragFloat("Curvature Blur Spatial Factor##curvature", &curvatureBlurSpatialFactor, 0.1f, 0.0f, 100.0f);
-        if (curvatureBlurMode > 1)  ImGui::DragFloat("Curvature Blur Range Factor##curvature", &curvatureBlurRangeFactor, 0.02f, 0.0f, 2.0f);
+
+        if (curvatureBlurMode == 2)
+        {
+            ImGui::DragFloat("Curvature Blur Spatial Factor##curvature", &curvatureBlurSpatialFactor, 0.1f, 0.0f, 100.0f);
+            ImGui::DragFloat("Curvature Blur Range Factor##curvature", &curvatureBlurRangeFactor, 0.02f, 0.0f, 2.0f);
+        }
+        else if (curvatureBlurMode == 1)
+        {
+            ImGui::DragFloat("Curvature Blur Spatial Factor##curvature", &curvatureBlurSpatialFactor, 0.001f, 0.0f, 1.0f);
+        }
 
         ImGui::Combo("Normals Blur Mode##curvature", &normalsBlurMode, blurModes, IM_ARRAYSIZE(blurModes));
-        if (normalsBlurMode > 0)    ImGui::DragFloat("Normals Blur Spatial Factor##curvature", &normalsBlurSpatialFactor, 0.1f, 0.0f, 100.0f);
-        if (normalsBlurMode > 1)    ImGui::DragFloat("Normals Blur Range Factor##curvature", &normalsBlurRangeFactor, 0.02f, 0.0f, 2.0f);
+
+        if (normalsBlurMode == 2)
+        {
+            ImGui::DragFloat("Normals Blur Spatial Factor##curvature", &normalsBlurSpatialFactor, 0.1f, 0.0f, 100.0f);
+            ImGui::DragFloat("Normals Blur Range Factor##curvature", &normalsBlurRangeFactor, 0.02f, 0.0f, 2.0f);
+        }
+        else if (normalsBlurMode == 1)
+        {
+            ImGui::DragFloat("Normals Blur Spatial Factor##curvature", &normalsBlurSpatialFactor, 0.001f, 0.0f, 1.0f);
+        }
 
         if (ImGui::Button("Filter##curvature"))
         {
@@ -163,7 +205,6 @@ static void drawMainWindow()
     
     if (ImGui::CollapsingHeader("Noise Generator"))
     {
-        static r32 noiseIntensity = 0.0f;
         ImGui::DragFloat("Intensity##noise", &noiseIntensity, 0.001f, 0.0f, 1.0f);
         if (ImGui::Button("Apply##noise"))
         {
@@ -174,17 +215,37 @@ static void drawMainWindow()
 
     if (ImGui::CollapsingHeader("Texture"))
     {
-        static s32 radioSelection = 0;
-        ImGui::RadioButton("Solid##texture", &radioSelection, 0);
-        ImGui::RadioButton("Curvature (w/ blur)##texture", &radioSelection, 1);
-        ImGui::RadioButton("Curvature (wo/ blur)##texture", &radioSelection, 2);
-        ImGui::RadioButton("Normals (w/ blur)##texture", &radioSelection, 3);
-        ImGui::RadioButton("Normals (wo/ blur)##texture", &radioSelection, 4);
+        ImGui::RadioButton("Solid##texture", &textureRadioSelection, 0);
+        ImGui::RadioButton("Show distance (from distance filter)##texture", &textureRadioSelection, 1);
+        ImGui::RadioButton("Show curvature (from curvature filter)##texture", &textureRadioSelection, 2);
+        ImGui::RadioButton("Show normals (from curvature filter)##texture", &textureRadioSelection, 3);
 
         if (ImGui::Button("Apply##texture"))
         {
-            if (textureChangeCallback)
-                textureChangeCallback(radioSelection);
+            switch (textureRadioSelection)
+            {
+                case 0:
+                {
+                    if (textureChangeSolidCallback)
+                        textureChangeSolidCallback();
+                } break;
+                case 1:
+                {
+                    if (textureChangeDistanceCallback)
+                        textureChangeDistanceCallback(distanceSpatialFactor, distanceRangeFactor);
+                } break;
+                case 2:
+                {
+                    if (textureChangeCurvatureCallback)
+                        textureChangeCurvatureCallback(curvatureSpatialFactor, curvatureRangeFactor, curvatureBlurMode,
+                            curvatureBlurSpatialFactor, curvatureBlurRangeFactor, normalsBlurMode, normalsBlurSpatialFactor, normalsBlurRangeFactor);
+                } break;
+                case 3:
+                {
+                    if (textureChangeNormalsCallback)
+                        textureChangeNormalsCallback(normalsBlurMode, normalsBlurSpatialFactor, normalsBlurRangeFactor);
+                } break;
+            }
         }
     }
 

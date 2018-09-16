@@ -374,21 +374,14 @@ extern void dtDeleteDomainTransforms(DomainTransform dt)
 		free(dt.horizontal);
 }
 
-extern FloatImageData dtGenerateCurvatureImage(
+extern FloatImageData dtGenerateDomainTransformsImage(
 	const GeometryImage* gim,
+	FilterMode filterMode,
 	r32 spatialFactor,
 	r32 rangeFactor,
-	boolean blurCurvatures,
-	r32 blurSS,
-	r32 blurSR)
+	const BlurInformation* blurInformation)
 {
-	BlurInformation blurInformation;
-	blurInformation.blurCurvatures = blurCurvatures;
-	blurInformation.blurCurvaturesMode = RECURSIVE_FILTER;
-	blurInformation.blurNormals = false;
-	blurInformation.curvatureBlurSR = blurSR;
-	blurInformation.curvatureBlurSS = blurSS;
-	DomainTransform domainTransform = dtGenerateDomainTransforms(gim, CURVATURE_FILTER, spatialFactor, rangeFactor, &blurInformation);
+	DomainTransform domainTransform = dtGenerateDomainTransforms(gim, filterMode, spatialFactor, rangeFactor, blurInformation);
 
 	// Alloc texture
 	FloatImageData curvatureImage;
@@ -422,13 +415,14 @@ extern FloatImageData dtGenerateCurvatureImage(
 extern FloatImageData dtGenerateNormalImage(
 	const GeometryImage* gim,
 	boolean shouldBlurNormals,
+	FilterMode blurMode,
 	r32 blurSS,
 	r32 blurSR)
 {
 	Vec4* normals;
 
 	if (shouldBlurNormals)
-		normals = blurNormals(gim, blurSS, blurSR, RECURSIVE_FILTER);
+		normals = blurNormals(gim, blurSS, blurSR, blurMode);
 	else
 		normals = gim->normals;
 
