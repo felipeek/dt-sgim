@@ -203,8 +203,11 @@ extern DomainTransform dtGenerateDomainTransforms(
 	// However, we create this new array because they may be blurred to filter and we do not want to modify geometry image's normals
 	Vec4* normals;
 
-	domainTransform.vertical = malloc(sizeof(r32) * gim->img.width * gim->img.height);
-	domainTransform.horizontal = malloc(sizeof(r32) * gim->img.width * gim->img.height);
+	if (filterMode == RECURSIVE_FILTER)
+		return (DomainTransform) {0, 0};
+
+	domainTransform.vertical = calloc(1, sizeof(r32) * gim->img.width * gim->img.height);
+	domainTransform.horizontal = calloc(1, sizeof(r32) * gim->img.width * gim->img.height);
 
 	if (blurInformation && blurInformation->blurNormals)
 		normals = blurNormals(gim, blurInformation->normalsBlurSS, blurInformation->normalsBlurSR, blurInformation->blurNormalsMode);
@@ -365,8 +368,10 @@ extern DomainTransform dtGenerateDomainTransforms(
 
 extern void dtDeleteDomainTransforms(DomainTransform dt)
 {
-	free(dt.vertical);
-	free(dt.horizontal);
+	if (dt.vertical)
+		free(dt.vertical);
+	if (dt.horizontal)
+		free(dt.horizontal);
 }
 
 extern FloatImageData dtGenerateCurvatureImage(
