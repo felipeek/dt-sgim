@@ -9,7 +9,7 @@ OBJDIR=$(OUTDIR)/obj
 VENDORDIR=$(SRCDIR)/vendor
 LDIR=lib
 
-LIBS=-lm -lglfw -lGLEW -lfreetype -lGL -lpng -lz
+LIBS=-lm -lglfw -lGLEW -lGL -lpng -lz
 
 _DEPS = camera.h common.h core.h domain_transform.h filter.h gim.h graphics_math.h graphics.h menu.h util.h
 DEPS = $(patsubst %,$(SRCDIR)/%,$(_DEPS))
