@@ -6,7 +6,7 @@
 
 #define PHONG_VERTEX_SHADER_PATH "./shaders/phong_shader.vs"
 #define PHONG_FRAGMENT_SHADER_PATH "./shaders/phong_shader.fs"
-#define GIM_ENTITY_COLOR (Vec4) {0.0f, 0.0f, 1.0f, 1.0f}
+#define GIM_ENTITY_COLOR (Vec4) {1.0f, 1.0f, 1.0f, 1.0f}
 
 static GeometryImage originalGim, noisyGim, filteredGim;
 static Entity gimEntity;
@@ -16,7 +16,7 @@ static Light* lights;
 
 static void updateFilteredGimMesh()
 {
-	Mesh m = gimGeometryImageToMesh(&filteredGim, (Vec4) {0.0f, 0.0f, 1.0f, 1.0f});
+	Mesh m = gimGeometryImageToMesh(&filteredGim, GIM_ENTITY_COLOR);
 	graphicsEntityMeshReplace(&gimEntity, m, false, false);
 }
 
@@ -185,18 +185,31 @@ static Light* createLights()
 
 	Vec4 lightPosition = (Vec4) {1.0f, 0.0f, 0.0f, 1.0f};
 	Vec4 ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
-	Vec4 diffuseColor = (Vec4) {1.0f, 1.0f, 1.0f, 1.0f};
-	Vec4 specularColor = (Vec4) {1.0f, 1.0f, 1.0f, 1.0f};
+	Vec4 diffuseColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
+	Vec4 specularColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
 	graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
 	array_push(lights, &light);
 
 	lightPosition = (Vec4) {-1.0f, 0.0f, 0.0f, 1.0f};
 	ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
-	diffuseColor = (Vec4) {1.0f, 1.0f, 1.0f, 1.0f};
-	specularColor = (Vec4) {1.0f, 1.0f, 1.0f, 1.0f};
+	diffuseColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
+	specularColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
 	graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
 	array_push(lights, &light);
 
+	lightPosition = (Vec4) {0.0f, 0.0f, 1.0f, 1.0f};
+	ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
+	diffuseColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
+	specularColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
+	graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
+	array_push(lights, &light);
+
+	lightPosition = (Vec4) {0.0f, 0.0f, -1.0f, 1.0f};
+	ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
+	diffuseColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
+	specularColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
+	graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
+	array_push(lights, &light);
 	return lights;
 }
 
