@@ -153,6 +153,11 @@ static void noiseGeneratorCallback(r32 intensity)
 	updateFilteredGimMesh();
 }
 
+static void exportWavefrontCallback()
+{
+	gimExportToObjFile(&filteredGim, "./res/output.obj");
+}
+
 static void registerMenuCallbacks()
 {
 	menuRegisterRecursiveFilterCallBack(filterRecursiveCallback);
@@ -163,6 +168,7 @@ static void registerMenuCallbacks()
 	menuRegisterTextureChangeCurvatureCallBack(textureChangeCurvatureCallback);
 	menuRegisterTextureChangeNormalsCallBack(textureChangeNormalsCallback);
 	menuRegisterNoiseGeneratorCallBack(noiseGeneratorCallback);
+	menuRegisterExportWavefrontCallBack(exportWavefrontCallback);
 }
 
 static PerspectiveCamera createCamera()

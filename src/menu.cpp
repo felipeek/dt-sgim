@@ -19,6 +19,7 @@ typedef void (*TextureChangeDistanceCallback)(r32, r32);
 typedef void (*TextureChangeCurvatureCallback)(r32, r32, s32, r32, r32, s32, r32, r32);
 typedef void (*TextureChangeNormalsCallback)(s32, r32, r32);
 typedef void (*NoiseGeneratorCallback)(r32);
+typedef void (*ExportWavefrontCallback)();
 
 static RecursiveFilterCallback recursiveFilterCallback;
 static DistanceFilterCallback distanceFilterCallback;
@@ -28,6 +29,7 @@ static TextureChangeDistanceCallback textureChangeDistanceCallback;
 static TextureChangeCurvatureCallback textureChangeCurvatureCallback;
 static TextureChangeNormalsCallback textureChangeNormalsCallback;
 static NoiseGeneratorCallback noiseGeneratorCallback;
+static ExportWavefrontCallback exportWavefrontCallback;
 
 extern "C" void menuRegisterRecursiveFilterCallBack(RecursiveFilterCallback f)
 {
@@ -67,6 +69,11 @@ extern "C" void menuRegisterTextureChangeNormalsCallBack(TextureChangeNormalsCal
 extern "C" void menuRegisterNoiseGeneratorCallBack(NoiseGeneratorCallback f)
 {
     noiseGeneratorCallback = f;
+}
+
+extern "C" void menuRegisterExportWavefrontCallBack(ExportWavefrontCallback f)
+{
+    exportWavefrontCallback = f;
 }
 
 extern "C" void menuCharClickProcess(GLFWwindow* window, u32 c)
@@ -252,6 +259,15 @@ static void drawMainWindow()
     if (ImGui::CollapsingHeader("Manual Filtering"))
     {
         ImGui::Text("Not ready yet...");
+    }
+
+    if (ImGui::CollapsingHeader("Export"))
+    {
+        if (ImGui::Button("Export to wavefront object (.obj)##export"))
+        {
+            if (exportWavefrontCallback)
+                exportWavefrontCallback();
+        }
     }
 
     ImGui::End();
