@@ -5,6 +5,7 @@
 #include <GL/glew.h>
 #include <stb_image.h>
 #include <stb_image_write.h>
+#include <dynamic_array.h>
 
 extern ImageData graphicsImageLoad(const s8* imagePath)
 {
@@ -232,17 +233,33 @@ extern Mesh graphicsMeshCreateWithTexture(Vertex* vertices, s32 verticesSize, u3
 	return mesh;
 }
 
-static void lightUpdateUniforms(const Light* light, Shader shader)
+static s8* buildLightUniformName(s8* buffer, s32 index, const s8* property)
 {
+	sprintf(buffer, "lights[%d].%s", index, property);
+	return buffer;
+}
+
+static void lightUpdateUniforms(const Light* lights, Shader shader)
+{
+	s32 numberOfLights = array_get_length(lights);
+	s8 buffer[64];
 	glUseProgram(shader);
-	GLint lightPositionLocation = glGetUniformLocation(shader, "light.position");
-	GLint ambientColorLocation = glGetUniformLocation(shader, "light.ambientColor");
-	GLint diffuseColorLocation = glGetUniformLocation(shader, "light.diffuseColor");
-	GLint specularColorLocation = glGetUniformLocation(shader, "light.specularColor");
-	glUniform4f(lightPositionLocation, light->position.x, light->position.y, light->position.z, light->position.w);
-	glUniform4f(ambientColorLocation, light->ambientColor.x, light->ambientColor.y, light->ambientColor.z, light->ambientColor.w);
-	glUniform4f(diffuseColorLocation, light->diffuseColor.x, light->diffuseColor.y, light->diffuseColor.z, light->diffuseColor.w);
-	glUniform4f(specularColorLocation, light->specularColor.x, light->specularColor.y, light->specularColor.z, light->specularColor.w);
+
+	for (s32 i = 0; i < numberOfLights; ++i)
+	{
+		Light light = lights[i];
+		GLint lightPositionLocation = glGetUniformLocation(shader, buildLightUniformName(buffer, i, "position"));
+		GLint ambientColorLocation = glGetUniformLocation(shader, buildLightUniformName(buffer, i, "ambientColor"));
+		GLint diffuseColorLocation = glGetUniformLocation(shader, buildLightUniformName(buffer, i, "diffuseColor"));
+		GLint specularColorLocation = glGetUniformLocation(shader, buildLightUniformName(buffer, i, "specularColor"));
+		glUniform4f(lightPositionLocation, light.position.x, light.position.y, light.position.z, light.position.w);
+		glUniform4f(ambientColorLocation, light.ambientColor.x, light.ambientColor.y, light.ambientColor.z, light.ambientColor.w);
+		glUniform4f(diffuseColorLocation, light.diffuseColor.x, light.diffuseColor.y, light.diffuseColor.z, light.diffuseColor.w);
+		glUniform4f(specularColorLocation, light.specularColor.x, light.specularColor.y, light.specularColor.z, light.specularColor.w);
+	}
+
+	GLint lightQuantityLocation = glGetUniformLocation(shader, "lightQuantity");
+	glUniform1i(lightQuantityLocation, numberOfLights);
 }
 
 static void diffuseUpdateUniforms(const DiffuseInfo* diffuseInfo, Shader shader)
@@ -449,10 +466,10 @@ extern void graphicsEntityRenderBasicShader(Shader shader, const PerspectiveCame
 	glUseProgram(0);
 }
 
-extern void graphicsEntityRenderPhongShader(Shader shader, const PerspectiveCamera* camera, const Entity* entity, const Light* light)
+extern void graphicsEntityRenderPhongShader(Shader shader, const PerspectiveCamera* camera, const Entity* entity, const Light* lights)
 {
 	glUseProgram(shader);
-	lightUpdateUniforms(light, shader);
+	lightUpdateUniforms(lights, shader);
 	GLint cameraPositionLocation = glGetUniformLocation(shader, "cameraPosition");
 	GLint shinenessLocation = glGetUniformLocation(shader, "objectShineness");
 	GLint modelMatrixLocation = glGetUniformLocation(shader, "modelMatrix");

@@ -30,7 +30,8 @@ struct DiffuseInfo
 };
 
 uniform mat4 modelMatrix;
-uniform Light light;
+uniform Light lights[16];
+uniform int lightQuantity;
 uniform NormalMappingInfo normalMappingInfo;
 uniform vec4 cameraPosition;
 uniform float objectShineness;
@@ -64,7 +65,7 @@ vec4 getCorrectNormal()
 	return normal;
 }
 
-void main()
+vec3 getPointColorOfLight(Light light)
 {
 	vec4 normal = getCorrectNormal();
 	vec4 realDiffuseColor = diffuseInfo.useDiffuseMap ? texture(diffuseInfo.diffuseMap, fragmentTextureCoords) :
@@ -94,5 +95,19 @@ void main()
 	pointSpecularColor *= pointAttenuation;
 
 	vec4 pointColor = pointAmbientColor + pointDiffuseColor;// + pointSpecularColor;
+	return pointColor.xyz;
 	finalColor = vec4(pointColor.xyz, 1.0);
+}
+
+void main()
+{
+	finalColor = vec4(0.0, 0.0, 0.0, 1.0);
+
+	for (int i = 0; i < lightQuantity; ++i)
+	{
+		vec3 pointColor = getPointColorOfLight(lights[i]);
+		finalColor.x += pointColor.x;
+		finalColor.y += pointColor.y;
+		finalColor.z += pointColor.z;
+	}
 }

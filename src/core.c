@@ -12,7 +12,7 @@ static GeometryImage originalGim, noisyGim, filteredGim;
 static Entity gimEntity;
 static Shader phongShader;
 static PerspectiveCamera camera;
-static Light light;
+static Light* lights;
 
 static void updateFilteredGimMesh()
 {
@@ -178,15 +178,26 @@ static PerspectiveCamera createCamera()
 	return camera;
 }
 
-static Light createLight()
+static Light* createLights()
 {
 	Light light;
+	Light* lights = array_create(Light, 1);
+
 	Vec4 lightPosition = (Vec4) {1.0f, 0.0f, 0.0f, 1.0f};
-	Vec4 ambientColor = (Vec4) {0.4f, 0.4f, 0.4f, 1.0f};
+	Vec4 ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
 	Vec4 diffuseColor = (Vec4) {1.0f, 1.0f, 1.0f, 1.0f};
 	Vec4 specularColor = (Vec4) {1.0f, 1.0f, 1.0f, 1.0f};
 	graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
-	return light;
+	array_push(lights, &light);
+
+	lightPosition = (Vec4) {-1.0f, 0.0f, 0.0f, 1.0f};
+	ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
+	diffuseColor = (Vec4) {1.0f, 1.0f, 1.0f, 1.0f};
+	specularColor = (Vec4) {1.0f, 1.0f, 1.0f, 1.0f};
+	graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
+	array_push(lights, &light);
+
+	return lights;
 }
 
 static void loadGeometryImage(const s8* gimPath)
@@ -217,7 +228,7 @@ extern void coreInit(const s8* gimPath)
 	// Load geometry image	
 	loadGeometryImage(gimPath);
 	// Create light
-	light = createLight();
+	lights = createLights();
 }
 
 extern void coreDestroy()
@@ -225,6 +236,7 @@ extern void coreDestroy()
 	gimFreeGeometryImage(&originalGim);
 	gimFreeGeometryImage(&noisyGim);
 	gimFreeGeometryImage(&filteredGim);
+	array_release(lights);
 }
 
 extern void coreUpdate(r32 deltaTime)
@@ -234,7 +246,7 @@ extern void coreUpdate(r32 deltaTime)
 
 extern void coreRender()
 {
-	graphicsEntityRenderPhongShader(phongShader, &camera, &gimEntity, &light);
+	graphicsEntityRenderPhongShader(phongShader, &camera, &gimEntity, lights);
 }
 
 extern void coreInputProcess(boolean* keyState, r32 deltaTime)

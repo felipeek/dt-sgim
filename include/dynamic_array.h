@@ -59,7 +59,7 @@
 #define array_reserve(arr, num) _array_reserve((void**)&arr, num)
 
 HO_EXPORT size_t  HO_API array_get_capacity(void* array_);
-HO_EXPORT size_t  HO_API array_get_length(void* array_);
+HO_EXPORT size_t  HO_API array_get_length(const void* array_);
 HO_EXPORT size_t  HO_API array_get_element_size(void* array_);
 
 HO_EXPORT void    HO_API array_set_capacity(void* array_, size_t s);
@@ -241,7 +241,7 @@ HO_EXPORT size_t HO_API array_get_capacity(void* array_)
 	return ((dynamic_array*)((char*)array_ - sizeof(dynamic_array)))->capacity;
 }
 
-HO_EXPORT size_t HO_API array_get_length(void* array_)
+HO_EXPORT size_t HO_API array_get_length(const void* array_)
 {
 	return ((dynamic_array*)((char*)array_ - sizeof(dynamic_array)))->length;
 }
