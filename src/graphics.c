@@ -296,39 +296,6 @@ static void normalsUpdateUniforms(const NormalMappingInfo* normalInfo, Shader sh
 	}
 }
 
-static boolean isU32SuitableCharacter(s8 c)
-{
-	if (c == '0') return true;
-	if (c == '1') return true;
-	if (c == '2') return true;
-	if (c == '3') return true;
-	if (c == '4') return true;
-	if (c == '5') return true;
-	if (c == '6') return true;
-	if (c == '7') return true;
-	if (c == '8') return true;
-	if (c == '9') return true;
-	return false;
-}
-
-static boolean isR32SuitableCharacter(s8 c)
-{
-	if (c == '0') return true;
-	if (c == '1') return true;
-	if (c == '2') return true;
-	if (c == '3') return true;
-	if (c == '4') return true;
-	if (c == '5') return true;
-	if (c == '6') return true;
-	if (c == '7') return true;
-	if (c == '8') return true;
-	if (c == '9') return true;
-	if (c == '.') return true;
-	if (c == '-') return true;
-	if (c == 'e') return true;
-	return false;
-}
-
 // This function must be re-done.
 // This implementation is just temporary, but it's not bug-free and will work only for a limited set of objs.
 extern void graphicsMeshRender(Shader shader, Mesh mesh)
