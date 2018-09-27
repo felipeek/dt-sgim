@@ -12,6 +12,7 @@ typedef void (*TextureChangeDistanceCallback)(r32, r32);
 typedef void (*TextureChangeCurvatureCallback)(r32, r32, s32, r32, r32, s32, r32, r32);
 typedef void (*TextureChangeNormalsCallback)(s32, r32, r32);
 typedef void (*ExportWavefrontCallback)();
+typedef void (*ExportPointCloudCallback)();
 
 extern void menuRegisterNoiseGeneratorCallBack(NoiseGeneratorCallback f);
 extern void menuRegisterRecursiveFilterCallBack(RecursiveFilterCallback f);
@@ -22,6 +23,7 @@ extern void menuRegisterTextureChangeDistanceCallBack(TextureChangeDistanceCallb
 extern void menuRegisterTextureChangeCurvatureCallBack(TextureChangeCurvatureCallback f);
 extern void menuRegisterTextureChangeNormalsCallBack(TextureChangeNormalsCallback f);
 extern void menuRegisterExportWavefrontCallBack();
+extern void menuRegisterExportPointCloudCallBack();
 extern void menuCharClickProcess(GLFWwindow* window, u32 c);
 extern void menuKeyClickProcess(GLFWwindow* window, s32 key, s32 scanCode, s32 action, s32 mods);
 extern void menuMouseClickProcess(GLFWwindow* window, s32 button, s32 action, s32 mods);

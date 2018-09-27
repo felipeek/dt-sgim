@@ -20,6 +20,7 @@ typedef void (*TextureChangeCurvatureCallback)(r32, r32, s32, r32, r32, s32, r32
 typedef void (*TextureChangeNormalsCallback)(s32, r32, r32);
 typedef void (*NoiseGeneratorCallback)(r32);
 typedef void (*ExportWavefrontCallback)();
+typedef void (*ExportPointCloudCallback)();
 
 static RecursiveFilterCallback recursiveFilterCallback;
 static DistanceFilterCallback distanceFilterCallback;
@@ -30,6 +31,7 @@ static TextureChangeCurvatureCallback textureChangeCurvatureCallback;
 static TextureChangeNormalsCallback textureChangeNormalsCallback;
 static NoiseGeneratorCallback noiseGeneratorCallback;
 static ExportWavefrontCallback exportWavefrontCallback;
+static ExportPointCloudCallback exportPointCloudCallback;
 
 extern "C" void menuRegisterRecursiveFilterCallBack(RecursiveFilterCallback f)
 {
@@ -74,6 +76,11 @@ extern "C" void menuRegisterNoiseGeneratorCallBack(NoiseGeneratorCallback f)
 extern "C" void menuRegisterExportWavefrontCallBack(ExportWavefrontCallback f)
 {
     exportWavefrontCallback = f;
+}
+
+extern "C" void menuRegisterExportPointCloudCallBack(ExportPointCloudCallback f)
+{
+    exportPointCloudCallback = f;
 }
 
 extern "C" void menuCharClickProcess(GLFWwindow* window, u32 c)
@@ -267,6 +274,12 @@ static void drawMainWindow()
         {
             if (exportWavefrontCallback)
                 exportWavefrontCallback();
+        }
+
+        if (ImGui::Button("Export to point cloud ascii file (.txt)##export"))
+        {
+            if (exportPointCloudCallback)
+                exportPointCloudCallback();
         }
     }
 

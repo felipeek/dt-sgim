@@ -158,6 +158,11 @@ static void exportWavefrontCallback()
 	gimExportToObjFile(&filteredGim, "./res/output.obj");
 }
 
+static void exportPointCloudCallback()
+{
+	gimExportToPointCloudFile(&filteredGim, "./res/point_cloud.txt");
+}
+
 static void registerMenuCallbacks()
 {
 	menuRegisterRecursiveFilterCallBack(filterRecursiveCallback);
@@ -169,6 +174,7 @@ static void registerMenuCallbacks()
 	menuRegisterTextureChangeNormalsCallBack(textureChangeNormalsCallback);
 	menuRegisterNoiseGeneratorCallBack(noiseGeneratorCallback);
 	menuRegisterExportWavefrontCallBack(exportWavefrontCallback);
+	menuRegisterExportPointCloudCallBack(exportPointCloudCallback);
 }
 
 static PerspectiveCamera createCamera()

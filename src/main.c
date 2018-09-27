@@ -95,7 +95,7 @@ static GLFWwindow* initGlfw()
 	glfwSetScrollCallback(window, glfwScrollCallback);
 	glfwSetWindowSizeCallback(window, glfwResizeCallback);
 	glfwSetCharCallback(window, glfwCharCallback);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	return window;
 }

@@ -425,3 +425,17 @@ extern GeometryImage gimCopyGeometryImage(const GeometryImage* gim, boolean copy
 	}
 	return copy;
 }
+
+extern void gimExportToPointCloudFile(const GeometryImage* gim, const s8* asciiFilePath)
+{
+	FILE *fp = fopen(asciiFilePath, "w+");
+	size_t verticesSize = array_get_length(gim->vertices);
+
+	for (s32 i = 0; i < verticesSize; ++i)
+		fprintf(fp, "%f %f %f\n",
+			gim->vertices[i].position.x,
+			gim->vertices[i].position.y,
+			gim->vertices[i].position.z);
+
+	fclose(fp);
+}
