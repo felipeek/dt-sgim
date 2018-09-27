@@ -4,6 +4,7 @@
 #include <math.h>
 #include <assert.h>
 #include "gim.h"
+#include <time.h>
 
 #define SQRT3 1.7320508075f
 #define SQRT2 1.4142135623f
@@ -895,7 +896,8 @@ extern GeometryImage filterGeometryImageFilter(
 	r32 spatialFactor,
 	r32 rangeFactor,
 	FilterMode filterMode,
-	const BlurInformation* blurInformation)
+	const BlurInformation* blurInformation,
+	boolean printTime)
 {
 	GeometryImage filteredGim = {0};
 	filteredGim.img = graphicsFloatImageCopy(&originalGim->img);
@@ -905,6 +907,8 @@ extern GeometryImage filterGeometryImageFilter(
 
 	// Memory Allocation
 	r32* rfCoefficients = (r32*)malloc(sizeof(r32) * numIterations);
+
+	clock_t t = clock();
 
 	// Calculate domain transforms
 	printf("Calculating domain transforms...\n");
@@ -935,8 +939,12 @@ extern GeometryImage filterGeometryImageFilter(
 		filterPiStep(originalGim, &filteredGim, domainTransform, numIterations, rfCoefficients, i, spatialFactor, filterMode);
 	}
 
+	t = clock() - t;
+
 	free(rfCoefficients);
 	dtDeleteDomainTransforms(domainTransform);
-	
+
+	if (printTime) printf("Time elapsed filtering: %f\n", ((double)t)/CLOCKS_PER_SEC);
+
 	return filteredGim;
 }

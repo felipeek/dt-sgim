@@ -23,7 +23,7 @@ static void updateFilteredGimMesh()
 static void filterRecursiveCallback(r32 ss, s32 n)
 {
 	gimFreeGeometryImage(&filteredGim);
-	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, 0.0f, RECURSIVE_FILTER, 0);
+	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, 0.0f, RECURSIVE_FILTER, 0, true);
 	gimGeometryImageUpdate3D(&filteredGim);
 	updateFilteredGimMesh();
 }
@@ -55,7 +55,7 @@ static void filterCurvatureCallback(r32 ss, r32 sr, s32 n, s32 curvBlurMode, r32
 	blurInformation.normalsBlurSR = normalsBlurSR;
 
 	gimFreeGeometryImage(&filteredGim);
-	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, sr, CURVATURE_FILTER, &blurInformation);
+	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, sr, CURVATURE_FILTER, &blurInformation, true);
 	gimGeometryImageUpdate3D(&filteredGim);
 	updateFilteredGimMesh();
 }
@@ -63,7 +63,7 @@ static void filterCurvatureCallback(r32 ss, r32 sr, s32 n, s32 curvBlurMode, r32
 static void filterDistanceCallback(r32 ss, r32 sr, s32 n)
 {
 	gimFreeGeometryImage(&filteredGim);
-	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, sr, DISTANCE_FILTER, 0);
+	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, sr, DISTANCE_FILTER, 0, true);
 	gimGeometryImageUpdate3D(&filteredGim);
 	updateFilteredGimMesh();
 }

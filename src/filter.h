@@ -31,6 +31,7 @@ extern GeometryImage filterGeometryImageFilter(
 	r32 spatialFactor,
 	r32 rangeFactor,
 	FilterMode filterMode,
-	const BlurInformation* blurInformation);
+	const BlurInformation* blurInformation,
+	boolean printTime);
 
 #endif

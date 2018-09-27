@@ -29,7 +29,7 @@ static Vec4* blurNormals(const GeometryImage* gim, r32 ss, r32 sr, FilterMode bl
 		}
 
 	// Blur the fake geometry image 
-	GeometryImage resultGim = filterGeometryImageFilter(&normalsGim, blurIterations, ss, sr, blurMode, 0);
+	GeometryImage resultGim = filterGeometryImageFilter(&normalsGim, blurIterations, ss, sr, blurMode, 0, false);
 
 	// Store results
 	for (s32 i = 0; i < normalsGim.img.height; ++i)
@@ -69,7 +69,7 @@ static void blurDomainTransform(const GeometryImage* gim, DomainTransform domain
 		}
 
 	// Blur the fake geometry image 
-	GeometryImage horizontalResultGim = filterGeometryImageFilter(&dtGim, blurIterations, ss, sr, blurMode, 0);
+	GeometryImage horizontalResultGim = filterGeometryImageFilter(&dtGim, blurIterations, ss, sr, blurMode, 0, false);
 
 	// Store results
 	for (s32 i = 0; i < dtGim.img.height; ++i)
@@ -87,7 +87,7 @@ static void blurDomainTransform(const GeometryImage* gim, DomainTransform domain
 		}
 
 	// Blur the fake geometry image 
-	GeometryImage verticalResultGim = filterGeometryImageFilter(&dtGim, blurIterations, ss, sr, blurMode, 0);
+	GeometryImage verticalResultGim = filterGeometryImageFilter(&dtGim, blurIterations, ss, sr, blurMode, 0, false);
 
 	// Store results
 	for (s32 i = 0; i < dtGim.img.height; ++i)
