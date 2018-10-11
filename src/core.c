@@ -4,6 +4,9 @@
 #include "domain_transform.h"
 #include "menu.h"
 
+#include <math.h>
+#include <stdio.h>
+
 #define PHONG_VERTEX_SHADER_PATH "./shaders/phong_shader.vs"
 #define PHONG_FRAGMENT_SHADER_PATH "./shaders/phong_shader.fs"
 #define GIM_ENTITY_COLOR (Vec4) {1.0f, 1.0f, 1.0f, 1.0f}
@@ -26,6 +29,27 @@ static void filterRecursiveCallback(r32 ss, s32 n)
 	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, 0.0f, RECURSIVE_FILTER, 0, true);
 	gimGeometryImageUpdate3D(&filteredGim);
 	updateFilteredGimMesh();
+}
+
+static void compareGims()
+{
+	r32 diffNoisy = 0.0f;
+	r32 diffFiltered = 0.0f;
+
+	for (s32 i = 0; i < originalGim.img.height; ++i)
+		for (s32 j = 0; j < originalGim.img.width; ++j)
+		{
+			Vec3 originalPixel = *(Vec3*)&originalGim.img.data[originalGim.img.width * originalGim.img.channels * i + originalGim.img.channels * j];
+			Vec3 noisyPixel = *(Vec3*)&noisyGim.img.data[noisyGim.img.width * noisyGim.img.channels * i + noisyGim.img.channels * j];
+			Vec3 filteredPixel = *(Vec3*)&filteredGim.img.data[filteredGim.img.width * filteredGim.img.channels * i + filteredGim.img.channels * j];
+			Vec3 subNoisy = gmSubtractVec3(originalPixel, noisyPixel);
+			Vec3 subFiltered = gmSubtractVec3(originalPixel, filteredPixel);
+			diffNoisy += fabsf(gmLengthVec3(subNoisy));
+			diffFiltered += fabsf(gmLengthVec3(subFiltered));
+		}
+
+	printf("Diff Noisy: %.3f\n", diffNoisy);
+	printf("Diff Filtered: %.3f\n", diffFiltered);
 }
 
 static void filterCurvatureCallback(r32 ss, r32 sr, s32 n, s32 curvBlurMode, r32 curvBlurSS, r32 curvBlurSR,
@@ -54,10 +78,22 @@ static void filterCurvatureCallback(r32 ss, r32 sr, s32 n, s32 curvBlurMode, r32
 	blurInformation.normalsBlurSS = normalsBlurSS;
 	blurInformation.normalsBlurSR = normalsBlurSR;
 
+	// @TEMPORARY
+	// Tests:
+	// 10.0f = Excelent curvature preservation and very bad mesh preservation
+	// 30.0f = Good curvature preservation and bad mesh preservation
+	// 50.0f = Regular curvature preservation and regular mesh preservation
+	// 70.0f+ = Bad curvature preservation and good mesh preservation
+	r32 variance = 10.0f * sr;
+	blurInformation.normalsBlurSS = expf(-sqrtf(2.0f) / variance);
+	printf("normalsBlurSS: %.4f\n", blurInformation.normalsBlurSS);
+
 	gimFreeGeometryImage(&filteredGim);
 	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, sr, CURVATURE_FILTER, &blurInformation, true);
 	gimGeometryImageUpdate3D(&filteredGim);
 	updateFilteredGimMesh();
+
+	compareGims();
 }
 
 static void filterDistanceCallback(r32 ss, r32 sr, s32 n)
