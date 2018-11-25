@@ -3,6 +3,7 @@
 #include "filter.h"
 #include "domain_transform.h"
 #include "menu.h"
+#include <math.h>
 
 #define PHONG_VERTEX_SHADER_PATH "./shaders/phong_shader.vs"
 #define PHONG_FRAGMENT_SHADER_PATH "./shaders/phong_shader.fs"
@@ -53,6 +54,17 @@ static void filterCurvatureCallback(r32 ss, r32 sr, s32 n, s32 curvBlurMode, r32
 
 	blurInformation.normalsBlurSS = normalsBlurSS;
 	blurInformation.normalsBlurSR = normalsBlurSR;
+
+	// @TEMPORARY
+	// Fix normalBlurSS value depending on sr
+	// Tests:
+	// 10.0f = Excelent curvature preservation and very bad mesh preservation
+	// 30.0f = Good curvature preservation and bad mesh preservation
+	// 50.0f = Regular curvature preservation and regular mesh preservation
+	// 70.0f+ = Bad curvature preservation and good mesh preservation
+	r32 variance = 30.0f * sr;
+	blurInformation.normalsBlurSS = expf(-sqrtf(2.0f) / variance);
+	//printf("normalsBlurSS: %.4f\n", blurInformation.normalsBlurSS);
 
 	gimFreeGeometryImage(&filteredGim);
 	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, sr, CURVATURE_FILTER, &blurInformation, true);

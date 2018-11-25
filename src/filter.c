@@ -121,7 +121,7 @@ static void filterHorizontalStep(
 		/* ******************************************************* CORRECTION ************************************************** */
 		/* ******************************************************* ********** ************************************************** */
 
-		Vec3 periodicBoundaryConstant = gmScalarProductVec3(1.0f / (1.0f - powf(productOfRecursiveFactors, 2.0f * (filteredGim->img.width - 1))), lastPixel);
+		Vec3 periodicBoundaryConstant = gmScalarProductVec3(1.0f / (1.0f - productOfRecursiveFactors), lastPixel);
 		s32 n = 1;
 
 		preCalculateArrayProducts(dtRecursiveFactors, 2.0f * (filteredGim->img.width - 1));
@@ -247,7 +247,7 @@ static void filterVerticalStep(
 		/* ******************************************************* CORRECTION ************************************************** */
 		/* ******************************************************* ********** ************************************************** */
 
-		Vec3 periodicBoundaryConstant = gmScalarProductVec3(1.0f / (1.0f - powf(productOfRecursiveFactors, 2.0f * (filteredGim->img.width - 1))), lastPixel);
+		Vec3 periodicBoundaryConstant = gmScalarProductVec3(1.0f / (1.0f - productOfRecursiveFactors), lastPixel);
 		s32 n = 1;
 
 		preCalculateArrayProducts(dtRecursiveFactors, 2.0f * (filteredGim->img.height - 1));
@@ -393,7 +393,7 @@ static void filterCStep(
 	/* ******************************************************* CORRECTION ************************************************** */
 	/* ******************************************************* ********** ************************************************** */
 
-	Vec3 periodicBoundaryConstant = gmScalarProductVec3(1.0f / (1.0f - powf(productOfRecursiveFactors, 2.0f * (filteredGim->img.width - 1))), lastPixel);
+	Vec3 periodicBoundaryConstant = gmScalarProductVec3(1.0f / (1.0f - productOfRecursiveFactors), lastPixel);
 	s32 n = 1;
 
 	preCalculateArrayProducts(dtRecursiveFactors, (filteredGim->img.height - 1) + (filteredGim->img.width - 1));
@@ -526,7 +526,7 @@ static void filterCStep(
 	/* ******************************************************* CORRECTION ************************************************** */
 	/* ******************************************************* ********** ************************************************** */
 
-	periodicBoundaryConstant = gmScalarProductVec3(1.0f / (1.0f - powf(productOfRecursiveFactors, 2.0f * (filteredGim->img.width - 1))), lastPixel);
+	periodicBoundaryConstant = gmScalarProductVec3(1.0f / (1.0f - productOfRecursiveFactors), lastPixel);
 	n = 1;
 
 	preCalculateArrayProducts(dtRecursiveFactors, (filteredGim->img.height - 1) + (filteredGim->img.width - 1));
@@ -687,7 +687,7 @@ static void filterPiStep(
 	/* ******************************************************* CORRECTION ************************************************** */
 	/* ******************************************************* ********** ************************************************** */
 
-	Vec3 periodicBoundaryConstant = gmScalarProductVec3(1.0f / (1.0f - powf(productOfRecursiveFactors, 2.0f * (filteredGim->img.width - 1))), lastPixel);
+	Vec3 periodicBoundaryConstant = gmScalarProductVec3(1.0f / (1.0f - productOfRecursiveFactors), lastPixel);
 	s32 n = 1;
 
 	preCalculateArrayProducts(dtRecursiveFactors, (filteredGim->img.height - 1) + (filteredGim->img.width - 1));
@@ -823,7 +823,7 @@ static void filterPiStep(
 	/* ******************************************************* CORRECTION ************************************************** */
 	/* ******************************************************* ********** ************************************************** */
 
-	periodicBoundaryConstant = gmScalarProductVec3(1.0f / (1.0f - powf(productOfRecursiveFactors, 2.0f * (filteredGim->img.width - 1))), lastPixel);
+	periodicBoundaryConstant = gmScalarProductVec3(1.0f / (1.0f - productOfRecursiveFactors), lastPixel);
 	n = 1;
 
 	preCalculateArrayProducts(dtRecursiveFactors, 2.0f * (filteredGim->img.height - 1));
