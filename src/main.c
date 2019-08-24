@@ -1,5 +1,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <stdio.h>
 #include "menu.h"
 #include "core.h"
 
@@ -108,12 +109,19 @@ static void initGlew()
 
 extern s32 main(s32 argc, s8** argv)
 {
+	if (argc != 2)
+	{
+		fprintf(stderr, "Usage: %s file.gim\n", argv[0]);
+		return -1;
+	}
+
     r32 deltaTime = 0.0f;
 
 	mainWindow = initGlfw();
 	initGlew();
 
-	coreInit(argv[1]);
+	if (coreInit(argv[1]))
+		return -1;
 
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

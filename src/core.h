@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-extern void coreInit(const s8* gimPath);
+extern int coreInit(const s8* gimPath);
 extern void coreDestroy();
 extern void coreUpdate(r32 deltaTime);
 extern void coreRender();

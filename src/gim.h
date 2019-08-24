@@ -13,7 +13,7 @@ struct GeometryImage
 	Vec4* normals;
 };
 
-extern GeometryImage gimParseGeometryImageFile(const u8* path);
+extern int gimParseGeometryImageFile(GeometryImage* gim, const u8* path);
 extern void gimGeometryImageUpdate3D(GeometryImage* gim);
 extern Mesh gimGeometryImageToMesh(const GeometryImage* gim, Vec4 color);
 extern void gimExportToObjFile(const GeometryImage* gim, const s8* objPath);

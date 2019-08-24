@@ -5,19 +5,22 @@
 #include <stdio.h>
 
 // Parses a .gim file into a GeometryImage
-extern GeometryImage gimParseGeometryImageFile(const u8* path)
+extern int gimParseGeometryImageFile(GeometryImage* gim, const u8* path)
 {
 	FILE* file = fopen(path, "rb");
-	GeometryImage gim = {0};
-
-	gim.img.channels = 3;
-	fread(&gim.img.width, sizeof(s32), 1, file);
-	fread(&gim.img.height, sizeof(s32), 1, file);
-	gim.img.data = malloc(sizeof(r32) * gim.img.width * gim.img.height * gim.img.channels);
-	fread(gim.img.data, sizeof(r32) * gim.img.width * gim.img.height * gim.img.channels, 1, file);
+	if (!file)
+	{
+		fprintf(stderr, "Error loading geometry image from path %s\n", path);
+		return -1;
+	}
+	gim->img.channels = 3;
+	fread(&gim->img.width, sizeof(s32), 1, file);
+	fread(&gim->img.height, sizeof(s32), 1, file);
+	gim->img.data = malloc(sizeof(r32) * gim->img.width * gim->img.height * gim->img.channels);
+	fread(gim->img.data, sizeof(r32) * gim->img.width * gim->img.height * gim->img.channels, 1, file);
 	fclose(file);
 
-	return gim;
+	return 0;
 }
 
 // This function updates geometry image's vertices and indexes based on its img

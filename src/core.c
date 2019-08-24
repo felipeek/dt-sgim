@@ -237,10 +237,11 @@ static Light* createLights()
 	return lights;
 }
 
-static void loadGeometryImage(const s8* gimPath)
+static int loadGeometryImage(const s8* gimPath)
 {
 	// Parse the original geometry image
-	originalGim = gimParseGeometryImageFile(gimPath);
+	if (gimParseGeometryImageFile(&originalGim, gimPath))
+		return -1;
 	// Update 3d information
 	gimGeometryImageUpdate3D(&originalGim);
 	// Copy original gim to noisy gim
@@ -252,9 +253,10 @@ static void loadGeometryImage(const s8* gimPath)
 	Mesh m = gimGeometryImageToMesh(&filteredGim, GIM_ENTITY_COLOR);
 	// Create filteredGim's entity
 	graphicsEntityCreate(&gimEntity, m, (Vec4){0.0f, 0.0f, 0.0f, 1.0f}, (Vec3){0.0f, 0.0f, 0.0f}, (Vec3){1.0f, 1.0f, 1.0f});
+	return 0;
 }
 
-extern void coreInit(const s8* gimPath)
+extern int coreInit(const s8* gimPath)
 {
 	// Register menu callbacks
 	registerMenuCallbacks();
@@ -263,9 +265,12 @@ extern void coreInit(const s8* gimPath)
 	// Create camera
 	camera = createCamera();
 	// Load geometry image	
-	loadGeometryImage(gimPath);
+	if (loadGeometryImage(gimPath))
+		return -1;
 	// Create light
 	lights = createLights();
+
+	return 0;
 }
 
 extern void coreDestroy()
