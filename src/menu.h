@@ -3,21 +3,17 @@
 #include <GLFW/glfw3.h>
 #include "common.h"
 
-typedef void (*RecursiveFilterCallback)(r32, s32);
-typedef void (*DistanceFilterCallback)(r32, r32, s32);
-typedef void (*CurvatureFilterCallback)(r32, r32, s32, s32, r32, r32, s32, r32, r32);
-typedef void (*NoiseGeneratorCallback)(r32);
+typedef void (*FilterCallback)(r32, r32, s32, r32, r32);
 typedef void (*TextureChangeSolidCallback)();
 typedef void (*TextureChangeDistanceCallback)(r32, r32);
-typedef void (*TextureChangeCurvatureCallback)(r32, r32, s32, r32, r32, s32, r32, r32);
-typedef void (*TextureChangeNormalsCallback)(s32, r32, r32);
+typedef void (*TextureChangeCurvatureCallback)(r32, r32, r32, r32);
+typedef void (*TextureChangeNormalsCallback)(r32, r32);
+typedef void (*NoiseGeneratorCallback)(r32);
 typedef void (*ExportWavefrontCallback)();
 typedef void (*ExportPointCloudCallback)();
 
 extern void menuRegisterNoiseGeneratorCallBack(NoiseGeneratorCallback f);
-extern void menuRegisterRecursiveFilterCallBack(RecursiveFilterCallback f);
-extern void menuRegisterDistanceFilterCallBack(DistanceFilterCallback f);
-extern void menuRegisterCurvatureFilterCallBack(CurvatureFilterCallback f);
+extern void menuRegisterFilterCallBack(FilterCallback f);
 extern void menuRegisterTextureChangeSolidCallBack(TextureChangeSolidCallback f);
 extern void menuRegisterTextureChangeDistanceCallBack(TextureChangeDistanceCallback f);
 extern void menuRegisterTextureChangeCurvatureCallBack(TextureChangeCurvatureCallback f);

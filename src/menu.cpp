@@ -11,20 +11,16 @@
 #define GLSL_VERSION "#version 130"
 #define MENU_TITLE "gimmesh"
 
-typedef void (*RecursiveFilterCallback)(r32, s32);
-typedef void (*DistanceFilterCallback)(r32, r32, s32);
-typedef void (*CurvatureFilterCallback)(r32, r32, s32, s32, r32, r32, s32, r32, r32);
+typedef void (*FilterCallback)(r32, r32, s32, r32, r32);
 typedef void (*TextureChangeSolidCallback)();
 typedef void (*TextureChangeDistanceCallback)(r32, r32);
-typedef void (*TextureChangeCurvatureCallback)(r32, r32, s32, r32, r32, s32, r32, r32);
-typedef void (*TextureChangeNormalsCallback)(s32, r32, r32);
+typedef void (*TextureChangeCurvatureCallback)(r32, r32, r32, r32);
+typedef void (*TextureChangeNormalsCallback)(r32, r32);
 typedef void (*NoiseGeneratorCallback)(r32);
 typedef void (*ExportWavefrontCallback)();
 typedef void (*ExportPointCloudCallback)();
 
-static RecursiveFilterCallback recursiveFilterCallback;
-static DistanceFilterCallback distanceFilterCallback;
-static CurvatureFilterCallback curvatureFilterCallback;
+static FilterCallback filterCallback;
 static TextureChangeSolidCallback textureChangeSolidCallback;
 static TextureChangeDistanceCallback textureChangeDistanceCallback;
 static TextureChangeCurvatureCallback textureChangeCurvatureCallback;
@@ -33,19 +29,9 @@ static NoiseGeneratorCallback noiseGeneratorCallback;
 static ExportWavefrontCallback exportWavefrontCallback;
 static ExportPointCloudCallback exportPointCloudCallback;
 
-extern "C" void menuRegisterRecursiveFilterCallBack(RecursiveFilterCallback f)
+extern "C" void menuRegisterFilterCallBack(FilterCallback f)
 {
-    recursiveFilterCallback = f;
-}
-
-extern "C" void menuRegisterDistanceFilterCallBack(DistanceFilterCallback f)
-{
-    distanceFilterCallback = f;
-}
-
-extern "C" void menuRegisterCurvatureFilterCallBack(CurvatureFilterCallback f)
-{
-    curvatureFilterCallback = f;
+    filterCallback = f;
 }
 
 extern "C" void menuRegisterTextureChangeSolidCallBack(TextureChangeSolidCallback f)
@@ -119,25 +105,13 @@ extern "C" void menuInit(GLFWwindow* window)
 
 static void drawMainWindow()
 {
-    static r32 recursiveSpatialFactor = 0.8f;
-    static s32 recursiveNumberOfIterations = 3;
-
-    static r32 distanceSpatialFactor = 7.0f;
-    static r32 distanceRangeFactor = 0.1f;
-    static s32 distanceNumberOfIterations = 3;
-
-    static r32 curvatureSpatialFactor = 50.0f;
-    static r32 curvatureRangeFactor = 0.2f;
-    static s32 curvatureNumberOfIterations = 3;
-    static r32 curvatureBlurSpatialFactor = 0.0f;
-    static r32 curvatureBlurRangeFactor = 0.0f;
-    static s32 curvatureBlurMode = 0;
+    static r32 filterSpatialFactor = 50.0f;
+    static r32 filterRangeFactor = 0.2f;
+    static s32 filterNumberOfIterations = 3;
+    static r32 filterBlurSpatialFactor = 0.0f;
+    static r32 filterBlurRangeFactor = 0.0f;
+    static s32 filterBlurNumberOfIterations = 3;
     
-    static s32 normalsNumberOfIterations = 3;
-    static r32 normalsBlurSpatialFactor = 0.9f;
-    static r32 normalsBlurRangeFactor = 0.0f;
-    static s32 normalsBlurMode = 1;
-
     static r32 noiseIntensity = 0.0f;
 
     static s32 textureRadioSelection = 0;
@@ -150,70 +124,20 @@ static void drawMainWindow()
         return;
     }
 
-    if (ImGui::CollapsingHeader("Recursive Filter"))
+    if (ImGui::CollapsingHeader("Filter"))
     {
-        ImGui::DragFloat("Spatial Factor##recursive", &recursiveSpatialFactor, 0.002f, 0.0f, 1.0f);
-        ImGui::DragInt("Number of Iterations##recursive", &recursiveNumberOfIterations, 0.02f, 1, 10);
+        ImGui::DragFloat("Spatial Factor##curvature", &filterSpatialFactor, 0.1f, 0.0f, 100.0f);
+        ImGui::DragFloat("Range Factor##curvature", &filterRangeFactor, 0.002f, 0.0f, 2.0f);
+        ImGui::DragInt("Number of Iterations##curvature", &filterNumberOfIterations, 0.02f, 1, 10);
 
-        if (ImGui::Button("Filter##recursive"))
-        {
-            if (recursiveFilterCallback)
-                recursiveFilterCallback(recursiveSpatialFactor, recursiveNumberOfIterations);
-        }
-    }
-
-    if (ImGui::CollapsingHeader("Distance Filter"))
-    {
-        ImGui::DragFloat("Spatial Factor##distance", &distanceSpatialFactor, 0.1f, 0.0f, 100.0f);
-        ImGui::DragFloat("Range Factor##distance", &distanceRangeFactor, 0.002f, 0.0f, 2.0f);
-        ImGui::DragInt("Number of Iterations##distance", &distanceNumberOfIterations, 0.02f, 1, 10);
-
-
-        if (ImGui::Button("Filter##distance"))
-        {
-            if (distanceFilterCallback)
-                distanceFilterCallback(distanceSpatialFactor, distanceRangeFactor, distanceNumberOfIterations);
-        }
-    }
-
-    if (ImGui::CollapsingHeader("Curvature Filter"))
-    {
-
-        ImGui::DragFloat("Spatial Factor##curvature", &curvatureSpatialFactor, 0.1f, 0.0f, 100.0f);
-        ImGui::DragFloat("Range Factor##curvature", &curvatureRangeFactor, 0.002f, 0.0f, 2.0f);
-        ImGui::DragInt("Number of Iterations##curvature", &curvatureNumberOfIterations, 0.02f, 1, 10);
-
-        const s8* blurModes[] = { "No blur", "Recursive blur", "Distance blur" };
-        ImGui::Combo("Curvature Blur Mode##curvature", &curvatureBlurMode, blurModes, IM_ARRAYSIZE(blurModes));
-
-        if (curvatureBlurMode == 2)
-        {
-            ImGui::DragFloat("Curvature Blur Spatial Factor##curvature", &curvatureBlurSpatialFactor, 0.1f, 0.0f, 100.0f);
-            ImGui::DragFloat("Curvature Blur Range Factor##curvature", &curvatureBlurRangeFactor, 0.02f, 0.0f, 2.0f);
-        }
-        else if (curvatureBlurMode == 1)
-        {
-            ImGui::DragFloat("Curvature Blur Spatial Factor##curvature", &curvatureBlurSpatialFactor, 0.001f, 0.0f, 1.0f);
-        }
-
-        ImGui::Combo("Normals Blur Mode##curvature", &normalsBlurMode, blurModes, IM_ARRAYSIZE(blurModes));
-
-        if (normalsBlurMode == 2)
-        {
-            ImGui::DragFloat("Normals Blur Spatial Factor##curvature", &normalsBlurSpatialFactor, 0.1f, 0.0f, 100.0f);
-            ImGui::DragFloat("Normals Blur Range Factor##curvature", &normalsBlurRangeFactor, 0.02f, 0.0f, 2.0f);
-        }
-        else if (normalsBlurMode == 1)
-        {
-            ImGui::DragFloat("Normals Blur Spatial Factor##curvature", &normalsBlurSpatialFactor, 0.001f, 0.0f, 1.0f);
-        }
+		ImGui::DragFloat("Normals Blur Spatial Factor##curvature", &filterBlurSpatialFactor, 0.1f, 0.0f, 100.0f);
+		ImGui::DragFloat("Normals Blur Range Factor##curvature", &filterBlurRangeFactor, 0.02f, 0.0f, 2.0f);
 
         if (ImGui::Button("Filter##curvature"))
         {
-            if (curvatureFilterCallback)
-                curvatureFilterCallback(curvatureSpatialFactor, curvatureRangeFactor, curvatureNumberOfIterations,
-                    curvatureBlurMode, curvatureBlurSpatialFactor, curvatureBlurRangeFactor, normalsBlurMode, normalsBlurSpatialFactor,
-                    normalsBlurRangeFactor);
+            if (filterCallback)
+                filterCallback(filterSpatialFactor, filterRangeFactor, filterNumberOfIterations,
+                    filterBlurSpatialFactor, filterBlurRangeFactor);
         }
     }
     
@@ -230,9 +154,8 @@ static void drawMainWindow()
     if (ImGui::CollapsingHeader("Texture"))
     {
         ImGui::RadioButton("Solid##texture", &textureRadioSelection, 0);
-        ImGui::RadioButton("Show distance (from distance filter)##texture", &textureRadioSelection, 1);
-        ImGui::RadioButton("Show curvature (from curvature filter)##texture", &textureRadioSelection, 2);
-        ImGui::RadioButton("Show normals (from curvature filter)##texture", &textureRadioSelection, 3);
+        ImGui::RadioButton("Show curvature (from curvature filter)##texture", &textureRadioSelection, 1);
+        ImGui::RadioButton("Show normals (from curvature filter)##texture", &textureRadioSelection, 2);
 
         if (ImGui::Button("Apply##texture"))
         {
@@ -245,27 +168,16 @@ static void drawMainWindow()
                 } break;
                 case 1:
                 {
-                    if (textureChangeDistanceCallback)
-                        textureChangeDistanceCallback(distanceSpatialFactor, distanceRangeFactor);
+                    if (textureChangeCurvatureCallback)
+                        textureChangeCurvatureCallback(filterSpatialFactor, filterRangeFactor, filterBlurSpatialFactor, filterBlurRangeFactor);
                 } break;
                 case 2:
                 {
-                    if (textureChangeCurvatureCallback)
-                        textureChangeCurvatureCallback(curvatureSpatialFactor, curvatureRangeFactor, curvatureBlurMode,
-                            curvatureBlurSpatialFactor, curvatureBlurRangeFactor, normalsBlurMode, normalsBlurSpatialFactor, normalsBlurRangeFactor);
-                } break;
-                case 3:
-                {
                     if (textureChangeNormalsCallback)
-                        textureChangeNormalsCallback(normalsBlurMode, normalsBlurSpatialFactor, normalsBlurRangeFactor);
+                        textureChangeNormalsCallback(filterBlurSpatialFactor, filterBlurRangeFactor);
                 } break;
             }
         }
-    }
-
-    if (ImGui::CollapsingHeader("Manual Filtering"))
-    {
-        ImGui::Text("Not ready yet...");
     }
 
     if (ImGui::CollapsingHeader("Export"))

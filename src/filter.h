@@ -3,26 +3,20 @@
 #include "gim.h"
 
 typedef enum FilterMode FilterMode;
-typedef struct BlurInformation BlurInformation;
+typedef struct BlurNormalsInformation BlurNormalsInformation;
 
 enum FilterMode
 {
 	RECURSIVE_FILTER = 0,
-	DISTANCE_FILTER = 1,
-	CURVATURE_FILTER = 2,
-	NOISE_GENERATOR = 3,
+	CURVATURE_FILTER = 1,
+	NOISE_GENERATOR = 2,
 };
 
-struct BlurInformation
+struct BlurNormalsInformation
 {
-	boolean blurCurvatures;
-	FilterMode blurCurvaturesMode;
-	boolean blurNormals;
-	FilterMode blurNormalsMode;
-	r32 curvatureBlurSS;
-	r32 curvatureBlurSR;
-	r32 normalsBlurSS;
-	r32 normalsBlurSR;
+	boolean shouldBlur;
+	r32 blurSS;
+	r32 blurSR;
 };
 
 extern GeometryImage filterGeometryImageFilter(
@@ -31,7 +25,7 @@ extern GeometryImage filterGeometryImageFilter(
 	r32 spatialFactor,
 	r32 rangeFactor,
 	FilterMode filterMode,
-	const BlurInformation* blurInformation,
+	const BlurNormalsInformation* blurNormalsInformation,
 	boolean printTime);
 
 #endif

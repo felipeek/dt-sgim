@@ -79,7 +79,7 @@ static void filterHorizontalStep(
 		// Filter from (lBorder, i) to (rBorder, i)
 		for (s32 j = 1; j < filteredGim->img.width; ++j)
 		{
-			if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+			if (filterMode == CURVATURE_FILTER)
 			{
 				r32 d = domainTransform.horizontal[i * originalGim->img.width + j];
 				recursiveFactor = powf(rfCoefficients[currentIteration], d);
@@ -98,7 +98,7 @@ static void filterHorizontalStep(
 		// Filter from (rBorder, mirrorY) to (lBorder, mirrorY)
 		for (s32 j = filteredGim->img.width - 2; j >= 0; --j)
 		{
-			if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+			if (filterMode == CURVATURE_FILTER)
 			{
 				r32 d = domainTransform.horizontal[mirrorYPosition * originalGim->img.width + (j + 1)];
 				recursiveFactor = powf(rfCoefficients[currentIteration], d);
@@ -114,7 +114,7 @@ static void filterHorizontalStep(
 		// Copy border pixel
 		*(Vec3*)&filteredGim->img.data[i * filteredGim->img.width * filteredGim->img.channels] = lastPixel;
 
-		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+		if (filterMode == CURVATURE_FILTER)
 			assert(dtRecursiveFactorIndex == 2.0f * (filteredGim->img.width - 1));
 #ifdef USE_CORRECTION
 		/* ******************************************************* ********** ************************************************** */
@@ -205,7 +205,7 @@ static void filterVerticalStep(
 		// Filter from (j, tBorder) to (j, bBorder)
 		for (s32 i = 1; i < filteredGim->img.height; ++i)
 		{
-			if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+			if (filterMode == CURVATURE_FILTER)
 			{
 				r32 d = domainTransform.vertical[i * originalGim->img.width + j];
 				recursiveFactor = powf(rfCoefficients[currentIteration], d);
@@ -223,7 +223,7 @@ static void filterVerticalStep(
 		// Filter from (mirrorX, bBorder) to (mirrorX, tBorder)
 		for (s32 i = filteredGim->img.height - 2; i >= 0; --i)
 		{
-			if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+			if (filterMode == CURVATURE_FILTER)
 			{
 				r32 d = domainTransform.vertical[(i + 1) * originalGim->img.width + mirrorXPosition];
 				recursiveFactor = powf(rfCoefficients[currentIteration], d);
@@ -239,7 +239,7 @@ static void filterVerticalStep(
 		// Copy border pixel
 		*(Vec3*)&filteredGim->img.data[j * filteredGim->img.channels] = lastPixel;
 
-		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+		if (filterMode == CURVATURE_FILTER)
 			assert(dtRecursiveFactorIndex == 2.0f * (filteredGim->img.height - 1));
 
 #ifdef USE_CORRECTION
@@ -325,7 +325,7 @@ static void filterCStep(
 	// Filter from (half, tBorder) to (half, bBorder)
 	for (s32 i = 0; i < filteredGim->img.height; ++i)
 	{
-		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+		if (filterMode == CURVATURE_FILTER)
 		{
 			r32 d = (i == 0) ? domainTransform.horizontal[i * originalGim->img.width + halfWidth] : domainTransform.vertical[i * originalGim->img.width + halfWidth];
 			recursiveFactor = powf(rfCoefficients[currentIteration], d);
@@ -343,7 +343,7 @@ static void filterCStep(
 	{
 		s32 mirrorXBorder = filteredGim->img.width - 1 - j;
 
-		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+		if (filterMode == CURVATURE_FILTER)
 		{
 			r32 d = domainTransform.horizontal[(filteredGim->img.height - 1) * originalGim->img.width + j];
 			recursiveFactor = powf(rfCoefficients[currentIteration], d);
@@ -369,7 +369,7 @@ static void filterCStep(
 	{
 		s32 mirrorXBorder = filteredGim->img.width - 1 - j;
 
-		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+		if (filterMode == CURVATURE_FILTER)
 		{
 			r32 d = domainTransform.horizontal[0 * originalGim->img.width + (j + 1)];
 			recursiveFactor = powf(rfCoefficients[currentIteration], d);
@@ -385,7 +385,7 @@ static void filterCStep(
 		*(Vec3*)&filteredGim->img.data[mirrorXBorder * filteredGim->img.channels] = lastPixel;
 	}
 
-	if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)	
+	if (filterMode == CURVATURE_FILTER)	
 		assert(dtRecursiveFactorIndex == (filteredGim->img.height - 1) + (filteredGim->img.width - 1));
 
 #ifdef USE_CORRECTION
@@ -459,7 +459,7 @@ static void filterCStep(
 	// Filter from (half, bBorder) to (half, tBorder)
 	for (s32 i = filteredGim->img.height - 1; i >= 0; --i)
 	{
-		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+		if (filterMode == CURVATURE_FILTER)
 		{
 			r32 d = (i == originalGim->img.height - 1) ? domainTransform.horizontal[i * originalGim->img.width + (halfWidth + 1)] : domainTransform.vertical[(i + 1) * originalGim->img.width + halfWidth];
 			recursiveFactor = powf(rfCoefficients[currentIteration], d);
@@ -477,7 +477,7 @@ static void filterCStep(
 	{
 		s32 mirrorXBorder = filteredGim->img.width - 1 - j;
 
-		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+		if (filterMode == CURVATURE_FILTER)
 		{
 			r32 d = domainTransform.horizontal[0 * originalGim->img.width + j];
 			recursiveFactor = powf(rfCoefficients[currentIteration], d);
@@ -502,7 +502,7 @@ static void filterCStep(
 	{
 		s32 mirrorXBorder = filteredGim->img.width - 1 - j;
 
-		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+		if (filterMode == CURVATURE_FILTER)
 		{
 			r32 d = domainTransform.horizontal[(filteredGim->img.height - 1) * originalGim->img.width + (j + 1)];
 			recursiveFactor = powf(rfCoefficients[currentIteration], d);
@@ -518,7 +518,7 @@ static void filterCStep(
 		*(Vec3*)&filteredGim->img.data[(filteredGim->img.height - 1) * filteredGim->img.width * filteredGim->img.channels + mirrorXBorder * filteredGim->img.channels] = lastPixel;
 	}
 
-	if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+	if (filterMode == CURVATURE_FILTER)
 		assert(dtRecursiveFactorIndex == (filteredGim->img.height - 1) + (filteredGim->img.width - 1));
 
 #ifdef USE_CORRECTION
@@ -620,7 +620,7 @@ static void filterPiStep(
 	// Filter from (lBorder, half) to (rBorder, half)
 	for (s32 j = 0; j < filteredGim->img.width; ++j)
 	{
-		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+		if (filterMode == CURVATURE_FILTER)
 		{
 			r32 d = (j == 0) ? domainTransform.vertical[halfHeight * originalGim->img.width + j] : domainTransform.horizontal[halfHeight * originalGim->img.width + j];
 			recursiveFactor = powf(rfCoefficients[currentIteration], d);
@@ -638,7 +638,7 @@ static void filterPiStep(
 	{
 		s32 mirrorYBorder = filteredGim->img.height - 1 - i;
 
-		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+		if (filterMode == CURVATURE_FILTER)
 		{
 			r32 d = domainTransform.vertical[i * originalGim->img.width + (filteredGim->img.width - 1)];
 			recursiveFactor = powf(rfCoefficients[currentIteration], d);
@@ -663,7 +663,7 @@ static void filterPiStep(
 	{
 		s32 mirrorYBorder = filteredGim->img.height - 1 - i;
 
-		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+		if (filterMode == CURVATURE_FILTER)
 		{
 			r32 d = domainTransform.vertical[(i + 1) * originalGim->img.width + 0];
 			recursiveFactor = powf(rfCoefficients[currentIteration], d);
@@ -679,7 +679,7 @@ static void filterPiStep(
 		*(Vec3*)&filteredGim->img.data[mirrorYBorder * filteredGim->img.width * filteredGim->img.channels] = lastPixel;
 	}
 
-	if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+	if (filterMode == CURVATURE_FILTER)
 		assert(dtRecursiveFactorIndex == (filteredGim->img.height - 1) + (filteredGim->img.width - 1));
 
 #ifdef USE_CORRECTION
@@ -755,7 +755,7 @@ static void filterPiStep(
 	// Filter from (rBorder, half) to (lBorder, half)
 	for (s32 j = filteredGim->img.width - 1; j >= 0; --j)
 	{
-		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+		if (filterMode == CURVATURE_FILTER)
 		{
 			r32 d = (j == originalGim->img.width - 1) ? domainTransform.vertical[(halfHeight + 1) * originalGim->img.width + j] :
 				domainTransform.horizontal[halfHeight * originalGim->img.width + (j + 1)];
@@ -774,7 +774,7 @@ static void filterPiStep(
 	{
 		s32 mirrorYBorder = filteredGim->img.height - 1 - i;
 
-		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+		if (filterMode == CURVATURE_FILTER)
 		{
 			r32 d = domainTransform.vertical[i * originalGim->img.width + 0];
 			recursiveFactor = powf(rfCoefficients[currentIteration], d);
@@ -799,7 +799,7 @@ static void filterPiStep(
 	{
 		s32 mirrorYBorder = filteredGim->img.height - 1 - i;
 
-		if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+		if (filterMode == CURVATURE_FILTER)
 		{
 			r32 d = domainTransform.vertical[(i + 1) * originalGim->img.width + (filteredGim->img.width - 1)];
 			recursiveFactor = powf(rfCoefficients[currentIteration], d);
@@ -815,7 +815,7 @@ static void filterPiStep(
 		*(Vec3*)&filteredGim->img.data[mirrorYBorder * filteredGim->img.width * filteredGim->img.channels + (filteredGim->img.width - 1) * filteredGim->img.channels] = lastPixel;
 	}
 
-	if (filterMode == DISTANCE_FILTER || filterMode == CURVATURE_FILTER)
+	if (filterMode == CURVATURE_FILTER)
 		assert(dtRecursiveFactorIndex == (filteredGim->img.height - 1) + (filteredGim->img.width - 1));
 
 #ifdef USE_CORRECTION
@@ -896,7 +896,7 @@ extern GeometryImage filterGeometryImageFilter(
 	r32 spatialFactor,
 	r32 rangeFactor,
 	FilterMode filterMode,
-	const BlurInformation* blurInformation,
+	const BlurNormalsInformation* blurNormalsInformation,
 	boolean printTime)
 {
 	GeometryImage filteredGim = {0};
@@ -911,8 +911,12 @@ extern GeometryImage filterGeometryImageFilter(
 	clock_t t = clock();
 
 	// Calculate domain transforms
-	printf("Calculating domain transforms...\n");
-	DomainTransform domainTransform = dtGenerateDomainTransforms(originalGim, filterMode, spatialFactor, rangeFactor, blurInformation);
+	DomainTransform domainTransform;
+	if (filterMode == CURVATURE_FILTER)
+	{
+		printf("Calculating domain transforms...\n");
+		domainTransform = dtGenerateDomainTransforms(originalGim, spatialFactor, rangeFactor, blurNormalsInformation);
+	}
 
 	/* ************************ */
 	printf("Calculating RF feedback coefficients...\n");
@@ -942,7 +946,8 @@ extern GeometryImage filterGeometryImageFilter(
 	t = clock() - t;
 
 	free(rfCoefficients);
-	dtDeleteDomainTransforms(domainTransform);
+	if (filterMode == CURVATURE_FILTER)
+		dtDeleteDomainTransforms(domainTransform);
 
 	if (printTime) printf("Time elapsed filtering: %f\n", ((double)t)/CLOCKS_PER_SEC);
 

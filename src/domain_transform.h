@@ -12,22 +12,19 @@ struct DomainTransform
 
 extern DomainTransform dtGenerateDomainTransforms(
 	const GeometryImage* gim,
-	FilterMode filterMode,
 	r32 spatialFactor,
 	r32 rangeFactor,
-	const BlurInformation* blurInformation);
+	const BlurNormalsInformation* blurInformation);
 
 extern FloatImageData dtGenerateDomainTransformsImage(
 	const GeometryImage* gim,
-	FilterMode filterMode,
 	r32 spatialFactor,
 	r32 rangeFactor,
-	const BlurInformation* blurInformation);
+	const BlurNormalsInformation* blurInformation);
 
 extern FloatImageData dtGenerateNormalImage(
 	const GeometryImage* gim,
 	boolean blurNormals,
-	FilterMode blurMode,
 	r32 blurSS,
 	r32 blurSR);
 
