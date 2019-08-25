@@ -29,14 +29,13 @@ static void filterRecursiveCallback(r32 ss, s32 n)
 	updateFilteredGimMesh();
 }
 
-static void filterCurvatureCallback(r32 ss, r32 sr, s32 n, r32 blurSS, r32 blurSR)
+static void filterCurvatureCallback(r32 ss, r32 sr, s32 n, r32 blurSS)
 {
 	// Fill blur information
 	BlurNormalsInformation blurNormalsInformation = {0};
 	blurNormalsInformation.shouldBlur = true;
 
 	blurNormalsInformation.blurSS = blurSS;
-	blurNormalsInformation.blurSR = blurSR;
 
 	// @TEMPORARY
 	// Fix blurSS value depending on SR
@@ -60,14 +59,13 @@ static void textureChangeSolidCallback()
 	graphicsMeshChangeColor(&gimEntity.mesh, GIM_ENTITY_COLOR, false);
 }
 
-static void textureChangeCurvatureCallback(r32 curvatureSpatialFactor, r32 curvatureRangeFactor, r32 normalsBlurSpatialFactor, r32 normalsBlurRangeFactor)
+static void textureChangeCurvatureCallback(r32 curvatureSpatialFactor, r32 curvatureRangeFactor, r32 normalsBlurSpatialFactor)
 {
 	// Fill blur information
 	BlurNormalsInformation blurNormalsInformation = {0};
 	blurNormalsInformation.shouldBlur = true;
 
 	blurNormalsInformation.blurSS = normalsBlurSpatialFactor;
-	blurNormalsInformation.blurSR = normalsBlurRangeFactor;
 
 	FloatImageData curvatureImage = dtGenerateDomainTransformsImage(&noisyGim, curvatureSpatialFactor, curvatureRangeFactor, &blurNormalsInformation);
 	FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
@@ -79,9 +77,9 @@ static void textureChangeCurvatureCallback(r32 curvatureSpatialFactor, r32 curva
 	graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, true);
 }
 
-static void textureChangeNormalsCallback(r32 normalsBlurSpatialFactor, r32 normalsBlurRangeFactor)
+static void textureChangeNormalsCallback(r32 normalsBlurSpatialFactor)
 {
-	FloatImageData curvatureImage = dtGenerateNormalImage(&noisyGim, true, normalsBlurSpatialFactor, normalsBlurRangeFactor);
+	FloatImageData curvatureImage = dtGenerateNormalImage(&noisyGim, true, normalsBlurSpatialFactor);
 	FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
 	graphicsFloatImageSave("./res/normals.bmp", &normalizedCurvatureImage);
 	graphicsFloatImageFree(&curvatureImage);

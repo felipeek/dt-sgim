@@ -100,8 +100,8 @@ extern void gimGeometryImageUpdate3D(GeometryImage* gim)
 			r32 bottomRightTopLeftDiagonal = gmLengthVec4(gmSubtractVec4(bottomRightVertex, topLeftVertex));
 
 			// @TODO: Check this
-			//if (bottomLeftTopRightDiagonal < bottomRightTopLeftDiagonal)
-			if (1)
+			if (bottomLeftTopRightDiagonal < bottomRightTopLeftDiagonal)
+			//if (1)
 			{
 				array_push(gim->indexes, &bottomLeftVertexIndex);
 				array_push(gim->indexes, &topRightVertexIndex);

@@ -9,14 +9,12 @@ enum FilterMode
 {
 	RECURSIVE_FILTER = 0,
 	CURVATURE_FILTER = 1,
-	NOISE_GENERATOR = 2,
 };
 
 struct BlurNormalsInformation
 {
 	boolean shouldBlur;
 	r32 blurSS;
-	r32 blurSR;
 };
 
 extern GeometryImage filterGeometryImageFilter(

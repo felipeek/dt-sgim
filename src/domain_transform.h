@@ -25,8 +25,7 @@ extern FloatImageData dtGenerateDomainTransformsImage(
 extern FloatImageData dtGenerateNormalImage(
 	const GeometryImage* gim,
 	boolean blurNormals,
-	r32 blurSS,
-	r32 blurSR);
+	r32 blurSS);
 
 extern void dtDeleteDomainTransforms(DomainTransform dt);
 

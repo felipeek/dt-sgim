@@ -2,7 +2,7 @@
 #include "gim.h"
 #include <assert.h>
 
-static Vec4* blurNormals(const GeometryImage* gim, r32 ss, r32 sr)
+static Vec4* blurNormals(const GeometryImage* gim, r32 ss)
 {
 	Vec4* blurredNormals = malloc(sizeof(Vec4) * gim->img.width * gim->img.height);
 
@@ -26,7 +26,7 @@ static Vec4* blurNormals(const GeometryImage* gim, r32 ss, r32 sr)
 		}
 
 	// Blur the fake geometry image 
-	GeometryImage resultGim = filterGeometryImageFilter(&normalsGim, blurIterations, ss, sr, RECURSIVE_FILTER, 0, false);
+	GeometryImage resultGim = filterGeometryImageFilter(&normalsGim, blurIterations, ss, 1000.0f, RECURSIVE_FILTER, 0, false);
 
 	// Store results
 	for (s32 i = 0; i < normalsGim.img.height; ++i)
@@ -132,7 +132,7 @@ extern DomainTransform dtGenerateDomainTransforms(
 	domainTransform.horizontal = calloc(1, sizeof(r32) * gim->img.width * gim->img.height);
 
 	if (blurNormalsInformation && blurNormalsInformation->shouldBlur)
-		normals = blurNormals(gim, blurNormalsInformation->blurSS, blurNormalsInformation->blurSR);
+		normals = blurNormals(gim, blurNormalsInformation->blurSS);
 	else
 		normals = gim->normals;
 
@@ -332,13 +332,12 @@ extern FloatImageData dtGenerateDomainTransformsImage(
 extern FloatImageData dtGenerateNormalImage(
 	const GeometryImage* gim,
 	boolean shouldBlurNormals,
-	r32 blurSS,
-	r32 blurSR)
+	r32 blurSS)
 {
 	Vec4* normals;
 
 	if (shouldBlurNormals)
-		normals = blurNormals(gim, blurSS, blurSR);
+		normals = blurNormals(gim, blurSS);
 	else
 		normals = gim->normals;
 

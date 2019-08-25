@@ -3,11 +3,11 @@
 #include <GLFW/glfw3.h>
 #include "common.h"
 
-typedef void (*FilterCallback)(r32, r32, s32, r32, r32);
+typedef void (*FilterCallback)(r32, r32, s32, r32);
 typedef void (*TextureChangeSolidCallback)();
 typedef void (*TextureChangeDistanceCallback)(r32, r32);
-typedef void (*TextureChangeCurvatureCallback)(r32, r32, r32, r32);
-typedef void (*TextureChangeNormalsCallback)(r32, r32);
+typedef void (*TextureChangeCurvatureCallback)(r32, r32, r32);
+typedef void (*TextureChangeNormalsCallback)(r32);
 typedef void (*NoiseGeneratorCallback)(r32);
 typedef void (*ExportWavefrontCallback)();
 typedef void (*ExportPointCloudCallback)();
