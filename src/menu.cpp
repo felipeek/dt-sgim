@@ -97,7 +97,7 @@ extern "C" void menuScrollChangeProcess(GLFWwindow* window, s64 xoffset, s64 yof
 static void getAvailableCustomTexturesPaths()
 {
 	const char dirPath[] = "./res/";
-	availableCustomTexturesPaths = array_create(char*, 0);
+	availableCustomTexturesPaths = array_create(char*, 1);
 
 	DIR *dir;
 	struct dirent *ent;
