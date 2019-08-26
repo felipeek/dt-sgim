@@ -511,6 +511,7 @@ extern u32 graphicsTextureCreateFromFloatData(const FloatImageData* imageData)
 extern u32 graphicsTextureCreate(const s8* texturePath)
 {
 	ImageData imageData = graphicsImageLoad(texturePath);
+	if (imageData.data == NULL) return -1;
 	u32 textureId = graphicsTextureCreateFromData(&imageData);
 	graphicsImageFree(&imageData);
 

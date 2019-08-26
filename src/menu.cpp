@@ -5,6 +5,9 @@
 #include "vendor/imgui_impl_opengl3.h"
 #include <stdio.h>
 
+#include <dirent.h>
+#include <dynamic_array.h>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -13,21 +16,23 @@
 
 typedef void (*FilterCallback)(r32, r32, s32, r32);
 typedef void (*TextureChangeSolidCallback)();
-typedef void (*TextureChangeDistanceCallback)(r32, r32);
 typedef void (*TextureChangeCurvatureCallback)(r32, r32, r32);
 typedef void (*TextureChangeNormalsCallback)(r32);
+typedef void (*TextureChangeCustomCallback)(char*);
 typedef void (*NoiseGeneratorCallback)(r32);
 typedef void (*ExportWavefrontCallback)();
 typedef void (*ExportPointCloudCallback)();
 
 static FilterCallback filterCallback;
 static TextureChangeSolidCallback textureChangeSolidCallback;
-static TextureChangeDistanceCallback textureChangeDistanceCallback;
 static TextureChangeCurvatureCallback textureChangeCurvatureCallback;
 static TextureChangeNormalsCallback textureChangeNormalsCallback;
+static TextureChangeCustomCallback textureChangeCustomCallback;
 static NoiseGeneratorCallback noiseGeneratorCallback;
 static ExportWavefrontCallback exportWavefrontCallback;
 static ExportPointCloudCallback exportPointCloudCallback;
+
+static char** availableCustomTexturesPaths;
 
 extern "C" void menuRegisterFilterCallBack(FilterCallback f)
 {
@@ -39,11 +44,6 @@ extern "C" void menuRegisterTextureChangeSolidCallBack(TextureChangeSolidCallbac
     textureChangeSolidCallback = f;
 }
 
-extern "C" void menuRegisterTextureChangeDistanceCallBack(TextureChangeDistanceCallback f)
-{
-    textureChangeDistanceCallback = f;
-}
-
 extern "C" void menuRegisterTextureChangeCurvatureCallBack(TextureChangeCurvatureCallback f)
 {
     textureChangeCurvatureCallback = f;
@@ -52,6 +52,11 @@ extern "C" void menuRegisterTextureChangeCurvatureCallBack(TextureChangeCurvatur
 extern "C" void menuRegisterTextureChangeNormalsCallBack(TextureChangeNormalsCallback f)
 {
     textureChangeNormalsCallback = f;
+}
+
+extern "C" void menuRegisterTextureChangeCustomCallBack(TextureChangeCustomCallback f)
+{
+    textureChangeCustomCallback = f;
 }
 
 extern "C" void menuRegisterNoiseGeneratorCallBack(NoiseGeneratorCallback f)
@@ -89,6 +94,25 @@ extern "C" void menuScrollChangeProcess(GLFWwindow* window, s64 xoffset, s64 yof
     ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
 }
 
+static void getAvailableCustomTexturesPaths()
+{
+	const char dirPath[] = "./res/";
+	availableCustomTexturesPaths = array_create(char*, 0);
+
+	DIR *dir;
+	struct dirent *ent;
+	if ((dir = opendir(dirPath)) != NULL) {
+		/* print all the files and directories within directory */
+		while ((ent = readdir(dir)) != NULL) {
+			char* dirName = (char*)malloc((sizeof(dirPath) + strlen(ent->d_name)) * sizeof(char));
+			strcpy(dirName, dirPath);
+			strcpy(dirName + sizeof(dirPath) - 1, ent->d_name);
+			array_push(availableCustomTexturesPaths, &dirName);
+		}
+		closedir (dir);
+	}
+}
+
 extern "C" void menuInit(GLFWwindow* window)
 {
     // Setup Dear ImGui binding
@@ -101,11 +125,13 @@ extern "C" void menuInit(GLFWwindow* window)
 
     // Setup style
     ImGui::StyleColorsDark();
+
+	getAvailableCustomTexturesPaths();
 }
 
 static void drawMainWindow()
 {
-    static r32 filterSpatialFactor = 100.0f;
+    static r32 filterSpatialFactor = 0.99f;//100.0f;
     static r32 filterRangeFactor = 2.0;
     static s32 filterNumberOfIterations = 3;
     static r32 filterBlurSpatialFactor = 0.9f;
@@ -154,6 +180,13 @@ static void drawMainWindow()
         ImGui::RadioButton("Solid##texture", &textureRadioSelection, 0);
         ImGui::RadioButton("Show curvature##texture", &textureRadioSelection, 1);
         ImGui::RadioButton("Show normals##texture", &textureRadioSelection, 2);
+		ImGui::RadioButton("Custom##texture", &textureRadioSelection, 3);
+
+		static int customTextureSelectedItem = 0;
+		if (textureRadioSelection == 3)
+		{
+            ImGui::Combo("", &customTextureSelectedItem, availableCustomTexturesPaths, array_get_length(availableCustomTexturesPaths));
+		}
 
         if (ImGui::Button("Apply##texture"))
         {
@@ -174,6 +207,12 @@ static void drawMainWindow()
                     if (textureChangeNormalsCallback)
                         textureChangeNormalsCallback(filterBlurSpatialFactor);
                 } break;
+				case 3:
+				{
+				    if (textureChangeCustomCallback)
+						if (customTextureSelectedItem >= 0 && customTextureSelectedItem < array_get_length(availableCustomTexturesPaths))
+							textureChangeCustomCallback(availableCustomTexturesPaths[customTextureSelectedItem]);
+				} break;
             }
         }
     }
@@ -219,4 +258,9 @@ extern "C" void menuDestroy()
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+
+	for (int i = 0; i < array_get_length(availableCustomTexturesPaths); ++i) {
+		free(availableCustomTexturesPaths[i]);
+	}
+	array_release(availableCustomTexturesPaths);
 }

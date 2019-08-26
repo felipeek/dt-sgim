@@ -21,14 +21,6 @@ static void updateFilteredGimMesh()
 	graphicsEntityMeshReplace(&gimEntity, m, false, false);
 }
 
-static void filterRecursiveCallback(r32 ss, s32 n)
-{
-	gimFreeGeometryImage(&filteredGim);
-	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, 0.0f, RECURSIVE_FILTER, 0, true);
-	gimGeometryImageUpdate3D(&filteredGim);
-	updateFilteredGimMesh();
-}
-
 static void filterCurvatureCallback(r32 ss, r32 sr, s32 n, r32 blurSS)
 {
 	// Fill blur information
@@ -74,7 +66,7 @@ static void textureChangeCurvatureCallback(r32 curvatureSpatialFactor, r32 curva
 	s32 currentTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
 	//gimCheckGeometryImage(&normalizedCurvatureImage);
 	graphicsFloatImageFree(&normalizedCurvatureImage);
-	graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, true);
+	if (currentTexture != -1) graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, true);
 }
 
 static void textureChangeNormalsCallback(r32 normalsBlurSpatialFactor)
@@ -86,7 +78,14 @@ static void textureChangeNormalsCallback(r32 normalsBlurSpatialFactor)
 	s32 currentTexture = graphicsTextureCreateFromFloatData(&normalizedCurvatureImage);
 	//gimCheckGeometryImage(&normalizedCurvatureImage);
 	graphicsFloatImageFree(&normalizedCurvatureImage);
-	graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, true);
+	if (currentTexture != -1) graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, true);
+}
+
+static void textureChangeCustomCallback(char* customTexturePath)
+{
+	s32 currentTexture = graphicsTextureCreate(customTexturePath);
+	//gimCheckGeometryImage(&normalizedCurvatureImage);
+	if (currentTexture != -1) graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, true);
 }
 
 static void noiseGeneratorCallback(r32 intensity)
@@ -116,6 +115,7 @@ static void registerMenuCallbacks()
 	menuRegisterTextureChangeSolidCallBack(textureChangeSolidCallback);
 	menuRegisterTextureChangeCurvatureCallBack(textureChangeCurvatureCallback);
 	menuRegisterTextureChangeNormalsCallBack(textureChangeNormalsCallback);
+	menuRegisterTextureChangeCustomCallBack(textureChangeCustomCallback);
 	menuRegisterNoiseGeneratorCallBack(noiseGeneratorCallback);
 	menuRegisterExportWavefrontCallBack(exportWavefrontCallback);
 	menuRegisterExportPointCloudCallBack(exportPointCloudCallback);
