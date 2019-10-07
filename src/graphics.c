@@ -287,10 +287,10 @@ static void normalsUpdateUniforms(const NormalMappingInfo* normalInfo, Shader sh
 	GLint normalMapTextureLocation = glGetUniformLocation(shader, "normalMappingInfo.normalMapTexture");
 	GLint tangentSpaceLocation = glGetUniformLocation(shader, "normalMappingInfo.tangentSpace");
 	glUniform1i(useNormalMapLocation, normalInfo->useNormalMap);
-	glUniform1i(tangentSpaceLocation, normalInfo->tangentSpace);
 	if (normalInfo->useNormalMap)
 	{
 		glUniform1i(normalMapTextureLocation, 2);
+		glUniform1i(tangentSpaceLocation, normalInfo->tangentSpace);
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, normalInfo->normalMapTexture);
 	}
@@ -464,8 +464,8 @@ extern u32 graphicsTextureCreateFromData(const ImageData* imageData)
 
 	glGenerateMipmap(GL_TEXTURE_2D);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);

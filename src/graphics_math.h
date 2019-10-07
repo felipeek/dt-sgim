@@ -104,6 +104,7 @@ struct DiscreteVec2Struct
 #pragma pack(pop)
 
 extern boolean gmInverseMat4(const Mat4* m, Mat4* invOut);
+extern Vec3 gmMultiplyMat3AndVec3(const Mat3* m, Vec3 v);
 extern Vec4 gmMultiplyMat4AndVec4(const Mat4* m, Vec4 v);
 extern Mat4 gmMultiplyMat4(const Mat4* m1, const Mat4* m2);
 extern Mat3 gmMultiplyMat3(const Mat3* m1, const Mat3* m2);

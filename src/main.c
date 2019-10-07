@@ -111,7 +111,7 @@ extern s32 main(s32 argc, s8** argv)
 {
 	if (argc != 2)
 	{
-		fprintf(stderr, "Usage: %s file.gim\n", argv[0]);
+		fprintf(stderr, "Usage: %s file.gim or %s file.obj\n", argv[0], argv[0]);
 		return -1;
 	}
 

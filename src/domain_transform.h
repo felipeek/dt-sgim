@@ -1,5 +1,5 @@
-#ifndef DT_MESH_SMOOTHING_DOMAIN_TRANSFORM_H
-#define DT_MESH_SMOOTHING_DOMAIN_TRANSFORM_H
+#ifndef GIMMESH_DOMAIN_TRANSFORM_H
+#define GIMMESH_DOMAIN_TRANSFORM_H
 #include "filter.h"
 
 typedef struct DomainTransform DomainTransform;
