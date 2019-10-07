@@ -20,8 +20,6 @@ extern int gimParseGeometryImageFile(GeometryImage* gim, const u8* path)
 	fread(gim->img.data, sizeof(r32) * gim->img.width * gim->img.height * gim->img.channels, 1, file);
 	fclose(file);
 
-	//gimCheckGeometryImage(&gim->img);
-
 	return 0;
 }
 
@@ -461,8 +459,6 @@ extern int gimExportToGimFile(const GeometryImage* gim, const s8* filePath)
 			fwrite(&gim->img.height, sizeof(s32), 1, file);
 			fwrite(gim->img.data, sizeof(r32) * gim->img.width * gim->img.height * gim->img.channels, 1, file);
 			fclose(file);
-
-			//gimCheckGeometryImage(&gim->img);
 
 			return 0;
 		}

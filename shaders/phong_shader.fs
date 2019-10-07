@@ -101,13 +101,6 @@ vec3 getPointColorOfLight(Light light)
 
 void main()
 {
-	//vec4 ll = diffuseInfo.useDiffuseMap ? texture(diffuseInfo.diffuseMap, fragmentTextureCoords) :
-	//	diffuseInfo.diffuseColor;
-	//	finalColor = texture(diffuseInfo.diffuseMap, fragmentTextureCoords);
-	////finalColor = vec4(1.0, 0.0, 0.0, 1.0);
-	////finalColor = vec4(fragmentTextureCoords.x, fragmentTextureCoords.y, 0.0, 1.0);
-	//	return;
-		
 	finalColor = vec4(0.0, 0.0, 0.0, 1.0);
 
 	for (int i = 0; i < lightQuantity; ++i)

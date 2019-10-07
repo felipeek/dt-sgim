@@ -184,7 +184,7 @@ static int loadGeometryImage(const s8* gimPath)
 	// Parse the original geometry image
 	if (gimParseGeometryImageFile(&originalGim, gimPath))
 		return -1;
-
+	// Check the border symmetry of the parsed GIM
 	gimCheckGeometryImage(&originalGim.img);
 	// Update 3d information
 	gimGeometryImageUpdate3D(&originalGim);
@@ -214,7 +214,6 @@ static MeshFileExt findMeshPathExtension(const s8* gimPath)
 	return UNKNOWN;
 }
 
-Entity e;
 extern int coreInit(const s8* meshFilePath)
 {
 	// Register menu callbacks
@@ -242,9 +241,6 @@ extern int coreInit(const s8* meshFilePath)
 				array_release(indexes);
 				return -1;
 			}
-			Mesh m = graphicsMeshCreateWithColor(vertices, array_get_length(vertices), indexes, array_get_length(indexes),
-				NULL, (Vec4){1.0f, 0.0f, 0.0f, 1.0f});
-			graphicsEntityCreate(&e, m, (Vec4){0.0f, 0.0f, 0.0f, 1.0f}, (Vec3){0.0f, 0.0f, 0.0f}, (Vec3){1.0f, 1.0f, 1.0f});
 			array_release(vertices);
 			array_release(indexes);
 			gimPath = GIM_PARAMETRIZATION_DEFAULT_PATH;
@@ -281,8 +277,6 @@ extern void coreUpdate(r32 deltaTime)
 extern void coreRender()
 {
 	graphicsEntityRenderPhongShader(phongShader, &camera, &gimEntity, lights);
-	//graphicsEntityRenderPhongShader(phongShader, &camera, &e, lights);
-	//graphicsEntityRenderPhongShader(phongShader, &camera, &entity, lights);
 }
 
 extern void coreInputProcess(boolean* keyState, r32 deltaTime)
