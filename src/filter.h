@@ -1,5 +1,5 @@
-#ifndef DT_MESH_SMOOTHING_FILTER_H
-#define DT_MESH_SMOOTHING_FILTER_H
+#ifndef GIMMESH_FILTER_H
+#define GIMMESH_FILTER_H
 #include "gim.h"
 
 typedef enum FilterMode FilterMode;

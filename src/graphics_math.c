@@ -193,6 +193,17 @@ extern Mat2 gmMultiplyMat2(const Mat2* m1, const Mat2* m2)
 	return result;
 }
 
+extern Vec3 gmMultiplyMat3AndVec3(const Mat3* m, Vec3 v)
+{
+	Vec3 result;
+
+	result.x = v.x * m->data[0][0] + v.y * m->data[0][1] + v.z * m->data[0][2];
+	result.y = v.x * m->data[1][0] + v.y * m->data[1][1] + v.z * m->data[1][2];
+	result.z = v.x * m->data[2][0] + v.y * m->data[2][1] + v.z * m->data[2][2];
+
+	return result;
+}
+
 extern Vec4 gmMultiplyMat4AndVec4(const Mat4* m, Vec4 v)
 {
 	Vec4 result;

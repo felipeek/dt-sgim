@@ -4,6 +4,8 @@
 #include "menu.h"
 #include "core.h"
 
+#include "parametrization.h"
+
 #define WINDOW_TITLE "gimmesh"
 
 s32 windowWidth = 1366;
@@ -96,7 +98,7 @@ static GLFWwindow* initGlfw()
 	glfwSetScrollCallback(window, glfwScrollCallback);
 	glfwSetWindowSizeCallback(window, glfwResizeCallback);
 	glfwSetCharCallback(window, glfwCharCallback);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
 	return window;
 }
@@ -111,7 +113,7 @@ extern s32 main(s32 argc, s8** argv)
 {
 	if (argc != 2)
 	{
-		fprintf(stderr, "Usage: %s file.gim\n", argv[0]);
+		fprintf(stderr, "Usage: %s file.gim or %s file.obj\n", argv[0], argv[0]);
 		return -1;
 	}
 

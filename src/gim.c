@@ -20,6 +20,8 @@ extern int gimParseGeometryImageFile(GeometryImage* gim, const u8* path)
 	fread(gim->img.data, sizeof(r32) * gim->img.width * gim->img.height * gim->img.channels, 1, file);
 	fclose(file);
 
+	//gimCheckGeometryImage(&gim->img);
+
 	return 0;
 }
 
@@ -441,4 +443,27 @@ extern void gimExportToPointCloudFile(const GeometryImage* gim, const s8* asciiF
 			gim->vertices[i].position.z);
 
 	fclose(fp);
+}
+
+extern int gimExportToGimFile(const GeometryImage* gim, const s8* filePath)
+{
+	for (u32 i = 0; i < gim->img.height; ++i)
+		for (u32 j = 0; j < gim->img.width; ++j)
+		{
+			FILE* file = fopen(filePath, "wb");
+			if (!file)
+			{
+				fprintf(stderr, "Error opening file from path %s\n", filePath);
+				return -1;
+			}
+
+			fwrite(&gim->img.width, sizeof(s32), 1, file);
+			fwrite(&gim->img.height, sizeof(s32), 1, file);
+			fwrite(gim->img.data, sizeof(r32) * gim->img.width * gim->img.height * gim->img.channels, 1, file);
+			fclose(file);
+
+			//gimCheckGeometryImage(&gim->img);
+
+			return 0;
+		}
 }

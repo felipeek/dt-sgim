@@ -1,5 +1,5 @@
-#ifndef DT_MESH_SMOOTHING_GIM_H
-#define DT_MESH_SMOOTHING_GIM_H
+#ifndef GIMMESH_GIM_H
+#define GIMMESH_GIM_H
 #include "graphics.h"
 #include "dynamic_array.h"
 
@@ -24,5 +24,6 @@ extern void gimCheckGeometryImage(const FloatImageData* gimImage);
 extern GeometryImage gimCopyGeometryImage(const GeometryImage* gim, boolean copy3d);
 extern GeometryImage gimAddNoise(const GeometryImage* gim, r32 noiseIntensity);
 extern void gimExportToPointCloudFile(const GeometryImage* gim, const s8* asciiFilePath);
+extern int gimExportToGimFile(const GeometryImage* gim, const s8* filePath);
 
 #endif
