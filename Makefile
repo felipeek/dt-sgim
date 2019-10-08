@@ -9,7 +9,12 @@ OBJDIR=$(OUTDIR)/obj
 VENDORDIR=$(SRCDIR)/vendor
 LDIR=lib
 
-LIBS=-lm -lglfw -lGLEW -lGL -lpng -lz
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+	LIBS=-framework OpenGL -lm -lglfw -lglew
+else
+	LIBS=-lm -lglfw -lGLEW -lGL -lpng -lz
+endif
 
 _DEPS = camera.h common.h core.h domain_transform.h filter.h gim.h graphics_math.h graphics.h menu.h obj.h parametrization.h util.h
 DEPS = $(patsubst %,$(SRCDIR)/%,$(_DEPS))

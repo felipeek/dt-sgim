@@ -68,15 +68,15 @@ static boolean intersectionRayTriangle(Vec3 rayOrigin, Vec3 rayVector, Vec3 vert
 		return false;
 }
 
-static boolean getGimPixelBySamplingMesh(Vec3* parametrizedVertices, Vertex* originalVertices, s32* indexes, Vec3 pointInSpace,
+static boolean getGimPixelBySamplingMesh(Vec3* parametrizedVertices, Vertex* originalVertices, u32* indexes, Vec3 pointInSpace,
 	Vec3* pixelColor)
 {
 	Vec3 rayVector = gmNormalizeVec3(pointInSpace);
 
 	for (s32 i = 0; i < array_get_length(indexes); i += 3) {
-		s32 index1 = indexes[i + 0];
-		s32 index2 = indexes[i + 1];
-		s32 index3 = indexes[i + 2];
+		u32 index1 = indexes[i + 0];
+		u32 index2 = indexes[i + 1];
+		u32 index3 = indexes[i + 2];
 		Vec3 v1 = parametrizedVertices[index1];
 		Vec3 v2 = parametrizedVertices[index2];
 		Vec3 v3 = parametrizedVertices[index3];
