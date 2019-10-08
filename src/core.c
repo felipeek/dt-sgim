@@ -214,6 +214,7 @@ static MeshFileExt findMeshPathExtension(const s8* gimPath)
 	return UNKNOWN;
 }
 
+Entity e;
 extern int coreInit(const s8* meshFilePath)
 {
 	// Register menu callbacks
@@ -241,8 +242,12 @@ extern int coreInit(const s8* meshFilePath)
 				array_release(indexes);
 				return -1;
 			}
-			array_release(vertices);
-			array_release(indexes);
+			Mesh m = graphicsMeshCreateWithColor(
+				vertices, array_get_length(vertices), indexes, array_get_length(indexes), 0, (Vec4){0.8f, 0.8f, 0.0f, 1.0f}
+			);
+			graphicsEntityCreate(&e, m, (Vec4){0.0f, 0.0f, 0.0f, 1.0f}, (Vec3){0.0f, 0.0f, 0.0f}, (Vec3){1.0f, 1.0f, 1.0f});
+			//array_release(vertices);
+			//array_release(indexes);
 			gimPath = GIM_PARAMETRIZATION_DEFAULT_PATH;
 		} break;
 		case GIM: {
@@ -257,7 +262,6 @@ extern int coreInit(const s8* meshFilePath)
 	// Load geometry image	
 	if (loadGeometryImage(gimPath))
 		return -1;
-
 	return 0;
 }
 
@@ -276,7 +280,8 @@ extern void coreUpdate(r32 deltaTime)
 
 extern void coreRender()
 {
-	graphicsEntityRenderPhongShader(phongShader, &camera, &gimEntity, lights);
+	//graphicsEntityRenderPhongShader(phongShader, &camera, &gimEntity, lights);
+	graphicsEntityRenderPhongShader(phongShader, &camera, &e, lights);
 }
 
 extern void coreInputProcess(boolean* keyState, r32 deltaTime)

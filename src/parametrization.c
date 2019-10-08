@@ -164,11 +164,16 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 	}
 
 	// tW = iD * W;
-	r32* tW = calloc(sizeof(r32), numberOfVertices * numberOfVertices);
+	r32* tW = array_create(r32, 1000);
+	DiscreteVec2* tWIndexes = array_create(DiscreteVec2, 1000);
 	for (u32 i = 0; i < numberOfVertices; ++i)
 		for (u32 j = 0; j < numberOfVertices; ++j)
-			if (W[i * numberOfVertices + j] == 1)
-				tW[i * numberOfVertices + j] = 1.0f / d[i];
+			if (W[i * numberOfVertices + j] == 1) {
+				DiscreteVec2 pos = (DiscreteVec2){i, j};
+				r32 v = 1.0f / d[i];
+				array_push(tWIndexes, &pos);
+				array_push(tW, &v);
+			}
 
 	array_release(d);
 	free(W);
@@ -199,24 +204,19 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 		verticesTmp[i] = gmScalarProductVec3(1.0f / v, current);
 	}
 
-	u32 numberOfIterations = 50;
+	u32 numberOfIterations = 2000;
 
-	Vec3* result = malloc(sizeof(Vec3) * numberOfVertices);
+	Vec3* result = calloc(1, sizeof(Vec3) * numberOfVertices);
 	for (u32 n = 0; n < numberOfIterations; ++n)
 	{
 		printf("Spherical Parametrization: Running iteration %d/%d...\n", n + 1, numberOfIterations);
 
-		//vertex1 = vertex1*tW';
-		for (u32 i = 0; i < numberOfVertices; ++i)
-		{
-			Vec3 current = (Vec3){0.0f, 0.0f, 0.0f};
-			for (u32 j = 0; j < numberOfVertices; ++j)
-			{
-				current.x += verticesTmp[j].x * tW[i * numberOfVertices + j];
-				current.y += verticesTmp[j].y * tW[i * numberOfVertices + j];
-				current.z += verticesTmp[j].z * tW[i * numberOfVertices + j];
-			}
-			result[i] = current;
+		memset(result, 0, sizeof(Vec3) * numberOfVertices);
+		for (u32 i = 0; i < array_get_length(tWIndexes); ++i) {
+			DiscreteVec2 pos = tWIndexes[i];
+			result[pos.x].x += verticesTmp[pos.y].x * tW[i];
+			result[pos.x].y += verticesTmp[pos.y].y * tW[i];
+			result[pos.x].z += verticesTmp[pos.y].z * tW[i];
 		}
 		memcpy(verticesTmp, result, sizeof(Vec3) * numberOfVertices);
 
@@ -236,16 +236,17 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 		}
 	}
 	free(result);
-	free(tW);
+	array_release(tW);
+	array_release(tWIndexes);
 
 	// GIM Sampling
 
 	// ! MUST BE ODD TO PRESERVE BORDER PIXELS SYMMETRY ! //
-	u32 gimSize = 15;
+	u32 gimSize = 1023;
 	// ! MUST BE ODD ! //
 
 	Vec3* gimData = calloc(1, sizeof(Vec3) * gimSize * gimSize);
-	Vec3 pixelColor;
+	Vec3 pixelColor, pointInSpace;
 	for (u32 y = 0; y < gimSize; ++y)
 	{
 		printf("Geometry Image Sampling: Running iteration %d/%d...\n", y + 1, gimSize);
@@ -265,13 +266,11 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 						(Vec2){1.0f, 1.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){0.0f, 1.0f, 0.0f},
 						(Vec3){1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, -1.0f},
 						barycentricCoordinates);
-
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
 				}
 				else
 				{
@@ -282,13 +281,11 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 						(Vec2){0.0f, 0.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, 1.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, 1.0f},
 						barycentricCoordinates);
-
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
 				}
 			}
 			else if (yNormalized >= 0.0f && xNormalized <= 0.0f)
@@ -302,13 +299,11 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 						(Vec2){-1.0f, 1.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){0.0f, 1.0f, 0.0f},
 						(Vec3){-1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, -1.0f},
 						barycentricCoordinates);
-
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
 				}
 				else
 				{
@@ -319,13 +314,11 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 						(Vec2){0.0f, 0.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){-1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, 1.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, 1.0f},
 						barycentricCoordinates);
-
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
 				}
 			}
 			else if (yNormalized <= 0.0f && xNormalized >= 0.0f)
@@ -339,13 +332,11 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 						(Vec2){0.0f, 0.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, -1.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, 1.0f},
 						barycentricCoordinates);
-
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
 				}
 				else
 				{
@@ -356,13 +347,11 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 						(Vec2){1.0f, -1.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){0.0f, -1.0f, 0.0f},
 						(Vec3){1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, -1.0f},
 						barycentricCoordinates);
-
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
 				}
 			}
 			else if (yNormalized <= 0.0f && xNormalized <= 0.0f)
@@ -376,13 +365,11 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 						(Vec2){0.0f, 0.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){-1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, -1.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, 1.0f},
 						barycentricCoordinates);
-
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
 				}
 				else
 				{
@@ -393,14 +380,20 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 						(Vec2){-1.0f, -1.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){0.0f, -1.0f, 0.0f},
 						(Vec3){-1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, -1.0f},
 						barycentricCoordinates);
-
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
 				}
+			}
+
+			if (!getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor)) {
+				printf("Could not sample spherical parametrization (does your mesh have holes?)\n");
+
+				// @TODO: What to do when we have a hole in the mesh?
+				// For now, let's keep the same color as the previous pixel... this way we may visually 'hide' the holes
+				pixelColor = pixelColor;
 			}
 
 			// Here, if we are dealing with a border pixel, we manually copy it to all its matches.
@@ -433,7 +426,7 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 
 	free(gimData);
 
-#if 0
+#if 1
 	for (u32 i = 0; i < numberOfVertices; ++i) {
 		vertices[i].position = (Vec4){verticesTmp[i].x, verticesTmp[i].y, verticesTmp[i].z, 1.0f};
 	}
