@@ -142,6 +142,12 @@ static s32 parseArguments(s32 argc, s8** argv)
 	s32 sphericalParametrizationNumberOfIterations = SPHERICAL_PARAM_ITERATIONS_DEFAULT;
 	s32 gimSize = GIM_SIZE_DEFAULT;
 
+	if (argc < 2)
+	{
+		printHelp(argv[0]);
+		return -1;
+	}
+
 	for (s32 i = 1; i < argc; ++i)
 	{
 		s8* arg = argv[i];
@@ -206,10 +212,15 @@ static s32 parseArguments(s32 argc, s8** argv)
 				return -1;
 			}
 		}
-		else
+		else if (!strcmp(arg, "-h") || !strcmp(arg, "--help"))
 		{
 			printHelp(argv[0]);
 			return 0;
+		}
+		else
+		{
+			printHelp(argv[0]);
+			return -1;
 		}
 	}
 
