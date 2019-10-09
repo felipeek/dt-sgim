@@ -280,8 +280,8 @@ extern void coreUpdate(r32 deltaTime)
 
 extern void coreRender()
 {
-	//graphicsEntityRenderPhongShader(phongShader, &camera, &gimEntity, lights);
-	graphicsEntityRenderPhongShader(phongShader, &camera, &e, lights);
+	graphicsEntityRenderPhongShader(phongShader, &camera, &gimEntity, lights);
+	//graphicsEntityRenderPhongShader(phongShader, &camera, &e, lights);
 }
 
 extern void coreInputProcess(boolean* keyState, r32 deltaTime)
