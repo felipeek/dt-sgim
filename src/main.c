@@ -3,12 +3,18 @@
 #include <stdio.h>
 #include "menu.h"
 #include "core.h"
+#include "obj.h"
+#include "parametrization.h"
 
 #define WINDOW_TITLE "gimmesh"
+#define SPHERICAL_PARAM_ITERATIONS_DEFAULT 500
+#define GIM_SIZE_DEFAULT 255
+#define GIM_PARAMETRIZATION_DEFAULT_PATH "./export.gim"
 
 s32 windowWidth = 1366;
 s32 windowHeight = 768;
 GLFWwindow* mainWindow;
+static s8* gimPath;
 
 static boolean keyState[1024];	// @TODO: Check range.
 static boolean isMenuVisible = false;
@@ -108,20 +114,143 @@ static void initGlew()
 	glewInit();
 }
 
-extern s32 main(s32 argc, s8** argv)
+static void printHelp(s8* app)
 {
-	if (argc != 2)
+	printf("Usage:\n\n");
+	printf("You can use this application with gim files (geometry images) or obj files (wavefront format).\n\n");
+	printf("To load a geometry image:\n\n");
+	printf("\t%s -g <example.gim>\n\n", app);
+	printf("Optional parameters:\n\n");
+	printf("\tNone\n\n");
+	printf("To load a wavefront object:\n\n");
+	printf("\t%s -o <example.obj>\n\n", app);
+	printf("Optional parameters:\n\n");
+	printf("\t-e <result.gim>\t: specify the path of the geometry image that will be generated (default: %s)\n", GIM_PARAMETRIZATION_DEFAULT_PATH);
+	printf("\t-it <number>\t: number of iterations for spherical parametrization algorithm (default: %d)\n", SPHERICAL_PARAM_ITERATIONS_DEFAULT);
+	printf("\t-s <number>\t: size of geometry image (<n> x <n>) [must be an odd number] (default: %d)\n", GIM_SIZE_DEFAULT);
+}
+
+// Returns 0 if no error, but UI should not be started
+// Returns 1 if no error and UI should be started
+// Returns -1 if error
+static s32 parseArguments(s32 argc, s8** argv)
+{
+	boolean validOptionSelected = false;
+	boolean convertObjToGeometryImage = false;
+	s8* objPath;
+	s8* exportPath = GIM_PARAMETRIZATION_DEFAULT_PATH;
+	s32 sphericalParametrizationNumberOfIterations = SPHERICAL_PARAM_ITERATIONS_DEFAULT;
+	s32 gimSize = GIM_SIZE_DEFAULT;
+
+	for (s32 i = 1; i < argc; ++i)
 	{
-		fprintf(stderr, "Usage: %s file.gim or %s file.obj\n", argv[0], argv[0]);
-		return -1;
+		s8* arg = argv[i];
+		if (!strcmp(arg, "-g"))
+		{
+			if (i == argc - 1)
+			{
+				fprintf(stderr, "-g requires an argument\n");
+				return -1;
+			}
+			if (validOptionSelected) return -1;
+			validOptionSelected = true;
+			gimPath = argv[i++ + 1];
+		}
+		else if (!strcmp(arg, "-o"))
+		{
+			if (i == argc - 1)
+			{
+				fprintf(stderr, "-o requires an argument\n");
+				return -1;
+			}
+			if (validOptionSelected) return -1;
+			validOptionSelected = true;
+			convertObjToGeometryImage = true;
+			objPath = argv[i++ + 1];
+		}
+		else if (!strcmp(arg, "-e"))
+		{
+			if (i == argc - 1)
+			{
+				fprintf(stderr, "-e requires an argument\n");
+				return -1;
+			}
+			exportPath = argv[i++ + 1];
+		}
+		else if (!strcmp(arg, "-it"))
+		{
+			if (i == argc - 1)
+			{
+				fprintf(stderr, "-it requires an argument\n");
+				return -1;
+			}
+			sphericalParametrizationNumberOfIterations = atoi(argv[i++ + 1]);
+			if (sphericalParametrizationNumberOfIterations <= 0) {
+				fprintf(stderr, "Invalid number of iterations for spherical parametrization.\n");
+				return -1;
+			}
+		}
+		else if (!strcmp(arg, "-s"))
+		{
+			if (i == argc - 1)
+			{
+				fprintf(stderr, "-s requires an argument\n");
+				return -1;
+			}
+			gimSize = atoi(argv[i++ + 1]);
+			if (gimSize <= 0) {
+				fprintf(stderr, "Invalid geometry image size: can't be negative.\n");
+				return -1;
+			} else if (gimSize % 2 == 0) {
+				fprintf(stderr, "Invalid geometry image size: must be odd\n");
+				return -1;
+			}
+		}
+		else
+		{
+			printHelp(argv[0]);
+			return 0;
+		}
 	}
 
+	if (convertObjToGeometryImage)
+	{
+		GeometryImage gim;
+		Vertex* vertices;
+		u32* indexes;
+		if (objParse(objPath, &vertices, &indexes))
+		{
+			fprintf(stderr, "Error parsing wavefront file.\n");
+			return -1;
+		}
+		if (paramObjToGeometryImage(indexes, vertices, exportPath, sphericalParametrizationNumberOfIterations, gimSize))
+		{
+			fprintf(stderr, "Error converting wavefront to geometry image.\n");
+			array_release(vertices);
+			array_release(indexes);
+			return -1;
+		}
+		array_release(vertices);
+		array_release(indexes);
+
+		gimPath = exportPath;
+	}
+
+	return validOptionSelected ? 1 : 0;
+}
+
+extern s32 main(s32 argc, s8** argv)
+{
     r32 deltaTime = 0.0f;
 
 	mainWindow = initGlfw();
 	initGlew();
 
-	if (coreInit(argv[1]))
+	s32 ret;
+	if ((ret = parseArguments(argc, argv)) != 1)
+		return ret;
+
+	if (coreInit(gimPath))
 		return -1;
 
 	glEnable(GL_DEPTH_TEST);

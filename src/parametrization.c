@@ -569,19 +569,16 @@ static void sphericalParametrizationToGeometryImage(GeometryImage* outGim, u32 g
 	outGim->img = fid;
 }
 
-extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* outPath)
+extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* outPath, s32 numberOfIterations, s32 gimSize)
 {
-	const u32 SPHERICAL_PARAM_ITERATIONS = 500;
-	const u32 GIM_SIZE = 511;
-
 	GeometryImage gim;
 	u32* triangleGroups[9];
 	assert(array_get_length(indexes) % 3 == 0);
 	
-	Vec3* parametrizedVertices = performSphericalParametrization(vertices, indexes, SPHERICAL_PARAM_ITERATIONS);
+	Vec3* parametrizedVertices = performSphericalParametrization(vertices, indexes, numberOfIterations);
 	separateTriangleGroups(indexes, parametrizedVertices, triangleGroups);
 
-	sphericalParametrizationToGeometryImage(&gim, GIM_SIZE, triangleGroups, vertices, parametrizedVertices);
+	sphericalParametrizationToGeometryImage(&gim, gimSize, triangleGroups, vertices, parametrizedVertices);
 
 	// @TEMPORARY
 	gimNormalizeAndSave(&gim, "./res/result.bmp");

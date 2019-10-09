@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+extern int coreParseArguments(s32 argc, char** argv);
 extern int coreInit(const s8* meshFilePath);
 extern void coreDestroy();
 extern void coreUpdate(r32 deltaTime);
