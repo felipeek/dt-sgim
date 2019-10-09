@@ -10,7 +10,6 @@
 
 #define PHONG_VERTEX_SHADER_PATH "./shaders/phong_shader.vs"
 #define PHONG_FRAGMENT_SHADER_PATH "./shaders/phong_shader.fs"
-#define GIM_PARAMETRIZATION_DEFAULT_PATH "./res/gim_result.gim"
 #define GIM_ENTITY_COLOR (Vec4) {1.0f, 1.0f, 1.0f, 1.0f}
 
 static GeometryImage originalGim, noisyGim, filteredGim;
@@ -18,12 +17,6 @@ static Entity gimEntity;
 static Shader phongShader;
 static PerspectiveCamera camera;
 static Light* lights;
-
-typedef enum {
-	UNKNOWN,
-	WAVEFRONT,
-	GIM
-} MeshFileExt;
 
 static void updateFilteredGimMesh()
 {
@@ -200,21 +193,7 @@ static int loadGeometryImage(const s8* gimPath)
 	return 0;
 }
 
-static MeshFileExt findMeshPathExtension(const s8* gimPath)
-{
-	s32 pathLen = strlen(gimPath);
-	if (pathLen < 4) return UNKNOWN;
-	const s8* ext = gimPath + pathLen - 4;
-	if (!strcmp(ext, ".obj")) {
-		return WAVEFRONT;
-	} else if (!strcmp(ext, ".gim")) {
-		return GIM;
-	}
-
-	return UNKNOWN;
-}
-
-extern int coreInit(const s8* meshFilePath)
+extern int coreInit(const s8* gimPath)
 {
 	// Register menu callbacks
 	registerMenuCallbacks();
@@ -224,40 +203,9 @@ extern int coreInit(const s8* meshFilePath)
 	camera = createCamera();
 	// Create light
 	lights = createLights();
-
-	MeshFileExt gimPathExt = findMeshPathExtension(meshFilePath);
-	const s8* gimPath;
-
-	switch (gimPathExt) {
-		case WAVEFRONT: {
-			GeometryImage gim;
-			Vertex* vertices;
-			u32* indexes;
-			if (objParse(meshFilePath, &vertices, &indexes))
-				return -1;
-			if (paramObjToGeometryImage(indexes, vertices, GIM_PARAMETRIZATION_DEFAULT_PATH))
-			{
-				array_release(vertices);
-				array_release(indexes);
-				return -1;
-			}
-			array_release(vertices);
-			array_release(indexes);
-			gimPath = GIM_PARAMETRIZATION_DEFAULT_PATH;
-		} break;
-		case GIM: {
-			gimPath = meshFilePath;
-		} break;
-		default: {
-			fprintf(stderr, "Unrecognized mesh file format. (need .gim or .obj)");
-			return -1;
-		}
-	}
-
 	// Load geometry image	
 	if (loadGeometryImage(gimPath))
 		return -1;
-
 	return 0;
 }
 
@@ -277,6 +225,7 @@ extern void coreUpdate(r32 deltaTime)
 extern void coreRender()
 {
 	graphicsEntityRenderPhongShader(phongShader, &camera, &gimEntity, lights);
+	//graphicsEntityRenderPhongShader(phongShader, &camera, &e, lights);
 }
 
 extern void coreInputProcess(boolean* keyState, r32 deltaTime)

@@ -11,7 +11,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#define GLSL_VERSION "#version 130"
+#define GLSL_VERSION "#version 330"
 #define MENU_TITLE "gimmesh"
 
 typedef void (*FilterCallback)(r32, r32, s32, r32);

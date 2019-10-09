@@ -17,7 +17,7 @@
 
 // Auxiliar function that changes each array item to be the product with all its ancestors
 // Example: [2, 4, 3] -> [2, 8, 24]
-static r32 preCalculateArrayProducts(r32* array, s32 size)
+static void preCalculateArrayProducts(r32* array, s32 size)
 {
 	r32 lastValue = 1.0f;
 	for (s32 i = 0; i < size; ++i)

@@ -10,15 +10,15 @@ static Vec3 convertToBarycentricCoordinates3D(Vec3 a, Vec3 b, Vec3 c, Vec3 p)
 	Vec3 v0 = gmSubtractVec3(b, a);
 	Vec3 v1 = gmSubtractVec3(c, a);
 	Vec3 v2 = gmSubtractVec3(p, a);
-    r32 d00 = gmDotProductVec3(v0, v0);
-    r32 d01 = gmDotProductVec3(v0, v1);
-    r32 d11 = gmDotProductVec3(v1, v1);
-    r32 d20 = gmDotProductVec3(v2, v0);
-    r32 d21 = gmDotProductVec3(v2, v1);
-    r32 denom = d00 * d11 - d01 * d01;
-    result.y = (d11 * d20 - d01 * d21) / denom;
-    result.z = (d00 * d21 - d01 * d20) / denom;
-    result.x = 1.0f - result.y - result.z;
+	r32 d00 = gmDotProductVec3(v0, v0);
+	r32 d01 = gmDotProductVec3(v0, v1);
+	r32 d11 = gmDotProductVec3(v1, v1);
+	r32 d20 = gmDotProductVec3(v2, v0);
+	r32 d21 = gmDotProductVec3(v2, v1);
+	r32 denom = d00 * d11 - d01 * d01;
+	result.y = (d11 * d20 - d01 * d21) / denom;
+	result.z = (d00 * d21 - d01 * d20) / denom;
+	result.x = 1.0f - result.y - result.z;
 	return result;
 }
 
@@ -68,15 +68,15 @@ static boolean intersectionRayTriangle(Vec3 rayOrigin, Vec3 rayVector, Vec3 vert
 		return false;
 }
 
-static boolean getGimPixelBySamplingMesh(Vec3* parametrizedVertices, Vertex* originalVertices, s32* indexes, Vec3 pointInSpace,
+static boolean getGimPixelBySamplingMesh(Vec3* parametrizedVertices, Vertex* originalVertices, u32* indexes, Vec3 pointInSpace,
 	Vec3* pixelColor)
 {
 	Vec3 rayVector = gmNormalizeVec3(pointInSpace);
 
 	for (s32 i = 0; i < array_get_length(indexes); i += 3) {
-		s32 index1 = indexes[i + 0];
-		s32 index2 = indexes[i + 1];
-		s32 index3 = indexes[i + 2];
+		u32 index1 = indexes[i + 0];
+		u32 index2 = indexes[i + 1];
+		u32 index3 = indexes[i + 2];
 		Vec3 v1 = parametrizedVertices[index1];
 		Vec3 v2 = parametrizedVertices[index2];
 		Vec3 v3 = parametrizedVertices[index3];
@@ -112,9 +112,9 @@ static Vec3 convertFromBarycentricToEuler3D(Vec3 a, Vec3 b, Vec3 c, Vec3 barycen
 	return result;
 }
 
-extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* outPath)
+// Parametrizes the received mesh into a sphere and return the new set of vertices
+static Vec3* performSphericalParametrization(const Vertex* vertices, u32* indexes, u32 numberOfIterations)
 {
-	assert(array_get_length(indexes) % 3 == 0);
 	u32 numberOfFaces = array_get_length(indexes) / 3;
 	u32 numberOfVertices = array_get_length(vertices);
 	DiscreteVec2* E = array_create(DiscreteVec2, numberOfFaces * 3);
@@ -164,11 +164,16 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 	}
 
 	// tW = iD * W;
-	r32* tW = calloc(sizeof(r32), numberOfVertices * numberOfVertices);
+	r32* tW = array_create(r32, 1000);
+	DiscreteVec2* tWIndexes = array_create(DiscreteVec2, 1000);
 	for (u32 i = 0; i < numberOfVertices; ++i)
 		for (u32 j = 0; j < numberOfVertices; ++j)
-			if (W[i * numberOfVertices + j] == 1)
-				tW[i * numberOfVertices + j] = 1.0f / d[i];
+			if (W[i * numberOfVertices + j] == 1) {
+				DiscreteVec2 pos = (DiscreteVec2){i, j};
+				r32 v = 1.0f / d[i];
+				array_push(tWIndexes, &pos);
+				array_push(tW, &v);
+			}
 
 	array_release(d);
 	free(W);
@@ -176,54 +181,47 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 		Perform Smoothing and Projection
 	*/
 
-	Vec3* verticesTmp = array_create(Vec3, numberOfVertices);
-	array_allocate(verticesTmp, numberOfVertices);
+	Vec3* parametrizedVertices = array_create(Vec3, numberOfVertices);
+	array_allocate(parametrizedVertices, numberOfVertices);
 	for (u32 i = 0; i < numberOfVertices; ++i)
-		verticesTmp[i] = (Vec3){vertices[i].position.x, vertices[i].position.y, vertices[i].position.z};
+		parametrizedVertices[i] = (Vec3){vertices[i].position.x, vertices[i].position.y, vertices[i].position.z};
 
 	// vertex1 = vertex1 - repmat( mean(vertex1,2), [1 n] );
 	Vec3 mean = (Vec3){0.0f, 0.0f, 0.0f};
 	for (u32 i = 0; i < numberOfVertices; ++i)
-		mean = gmAddVec3(mean, verticesTmp[i]);
+		mean = gmAddVec3(mean, parametrizedVertices[i]);
 	mean = gmScalarProductVec3(1.0f / numberOfVertices, mean);
 	for (u32 i = 0; i < numberOfVertices; ++i)
-		verticesTmp[i] = gmSubtractVec3(verticesTmp[i], mean);
+		parametrizedVertices[i] = gmSubtractVec3(parametrizedVertices[i], mean);
 
-	assert(array_get_length(verticesTmp) == numberOfVertices);
+	assert(array_get_length(parametrizedVertices) == numberOfVertices);
 
 	// vertex1 = vertex1 ./ repmat( sqrt(sum(vertex1.^2,1)), [3 1] );
 	for (u32 i = 0; i < numberOfVertices; ++i)
 	{
-		Vec3 current = verticesTmp[i];
+		Vec3 current = parametrizedVertices[i];
 		r32 v = sqrtf(current.x * current.x + current.y * current.y + current.z * current.z);
-		verticesTmp[i] = gmScalarProductVec3(1.0f / v, current);
+		parametrizedVertices[i] = gmScalarProductVec3(1.0f / v, current);
 	}
 
-	u32 numberOfIterations = 50;
-
-	Vec3* result = malloc(sizeof(Vec3) * numberOfVertices);
+	Vec3* result = calloc(1, sizeof(Vec3) * numberOfVertices);
 	for (u32 n = 0; n < numberOfIterations; ++n)
 	{
 		printf("Spherical Parametrization: Running iteration %d/%d...\n", n + 1, numberOfIterations);
 
-		//vertex1 = vertex1*tW';
-		for (u32 i = 0; i < numberOfVertices; ++i)
-		{
-			Vec3 current = (Vec3){0.0f, 0.0f, 0.0f};
-			for (u32 j = 0; j < numberOfVertices; ++j)
-			{
-				current.x += verticesTmp[j].x * tW[i * numberOfVertices + j];
-				current.y += verticesTmp[j].y * tW[i * numberOfVertices + j];
-				current.z += verticesTmp[j].z * tW[i * numberOfVertices + j];
-			}
-			result[i] = current;
+		memset(result, 0, sizeof(Vec3) * numberOfVertices);
+		for (u32 i = 0; i < array_get_length(tWIndexes); ++i) {
+			DiscreteVec2 pos = tWIndexes[i];
+			result[pos.x].x += parametrizedVertices[pos.y].x * tW[i];
+			result[pos.x].y += parametrizedVertices[pos.y].y * tW[i];
+			result[pos.x].z += parametrizedVertices[pos.y].z * tW[i];
 		}
-		memcpy(verticesTmp, result, sizeof(Vec3) * numberOfVertices);
+		memcpy(parametrizedVertices, result, sizeof(Vec3) * numberOfVertices);
 
 		// vertex1 = vertex1 ./ repmat( sqrt(sum(vertex1.^2,1)), [3 1] );
 		for (u32 i = 0; i < numberOfVertices; ++i)
 		{
-			Vec3 current = verticesTmp[i];
+			Vec3 current = parametrizedVertices[i];
 			r32 v;
 
 			// @TODO: check this...
@@ -232,20 +230,151 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 			else
 				v = sqrtf(current.x * current.x + current.y * current.y + current.z * current.z);
 			
-			verticesTmp[i] = gmScalarProductVec3(1.0f / v, current);
+			parametrizedVertices[i] = gmScalarProductVec3(1.0f / v, current);
 		}
 	}
 	free(result);
-	free(tW);
+	array_release(tW);
+	array_release(tWIndexes);
 
-	// GIM Sampling
+	return parametrizedVertices;
+}
 
-	// ! MUST BE ODD TO PRESERVE BORDER PIXELS SYMMETRY ! //
-	u32 gimSize = 15;
-	// ! MUST BE ODD ! //
+// This separates the triangles defined in the 'indexes' array in 8 groups, depending on where the triangle is located in the
+// parametrized sphere.
+// To avoid bugs later, when the triangle has vertices in multiple groups, we add it to all groups.
+static void separateTriangleGroups(const u32* indexes, const Vec3* parametrizedVertices, u32* triangleGroups[9])
+{
+	triangleGroups[0] = array_create(u32, 1);
+	triangleGroups[1] = array_create(u32, 1);
+	triangleGroups[2] = array_create(u32, 1);
+	triangleGroups[3] = array_create(u32, 1);
+	triangleGroups[4] = array_create(u32, 1);
+	triangleGroups[5] = array_create(u32, 1);
+	triangleGroups[6] = array_create(u32, 1);
+	triangleGroups[7] = array_create(u32, 1);
+	triangleGroups[8] = array_create(u32, 1);
+
+	for (u32 i = 0; i < array_get_length(indexes); i += 3)
+	{
+		u32 i1 = indexes[i + 0];
+		u32 i2 = indexes[i + 1];
+		u32 i3 = indexes[i + 2];
+		Vec3 p1 = parametrizedVertices[i1];
+		Vec3 p2 = parametrizedVertices[i2];
+		Vec3 p3 = parametrizedVertices[i3];
+		boolean foundGroup = false;
+
+		if ((p1.x >= 0.0f && p1.y >= 0.0f && p1.z >= 0.0f) &&
+			(p2.x >= 0.0f && p2.y >= 0.0f && p2.z >= 0.0f) &&
+			(p3.x >= 0.0f && p3.y >= 0.0f && p3.z >= 0.0f))
+		{
+			array_push(triangleGroups[1], &i1);
+			array_push(triangleGroups[1], &i2);
+			array_push(triangleGroups[1], &i3);
+			foundGroup = true;
+		}
+		if ((p1.x >= 0.0f && p1.y >= 0.0f && p1.z <= 0.0f) &&
+			(p2.x >= 0.0f && p2.y >= 0.0f && p2.z <= 0.0f) &&
+			(p3.x >= 0.0f && p3.y >= 0.0f && p3.z <= 0.0f))
+		{
+			array_push(triangleGroups[2], &i1);
+			array_push(triangleGroups[2], &i2);
+			array_push(triangleGroups[2], &i3);
+			foundGroup = true;
+		}
+		if ((p1.x >= 0.0f && p1.y <= 0.0f && p1.z >= 0.0f) &&
+			(p2.x >= 0.0f && p2.y <= 0.0f && p2.z >= 0.0f) &&
+			(p3.x >= 0.0f && p3.y <= 0.0f && p3.z >= 0.0f))
+		{
+			array_push(triangleGroups[3], &i1);
+			array_push(triangleGroups[3], &i2);
+			array_push(triangleGroups[3], &i3);
+			foundGroup = true;
+		}
+		if ((p1.x >= 0.0f && p1.y <= 0.0f && p1.z <= 0.0f) &&
+			(p2.x >= 0.0f && p2.y <= 0.0f && p2.z <= 0.0f) &&
+			(p3.x >= 0.0f && p3.y <= 0.0f && p3.z <= 0.0f))
+		{
+			array_push(triangleGroups[4], &i1);
+			array_push(triangleGroups[4], &i2);
+			array_push(triangleGroups[4], &i3);
+			foundGroup = true;
+		}
+		if ((p1.x <= 0.0f && p1.y >= 0.0f && p1.z >= 0.0f) &&
+			(p2.x <= 0.0f && p2.y >= 0.0f && p2.z >= 0.0f) &&
+			(p3.x <= 0.0f && p3.y >= 0.0f && p3.z >= 0.0f))
+		{
+			array_push(triangleGroups[5], &i1);
+			array_push(triangleGroups[5], &i2);
+			array_push(triangleGroups[5], &i3);
+			foundGroup = true;
+		}
+		if ((p1.x <= 0.0f && p1.y >= 0.0f && p1.z <= 0.0f) &&
+			(p2.x <= 0.0f && p2.y >= 0.0f && p2.z <= 0.0f) &&
+			(p3.x <= 0.0f && p3.y >= 0.0f && p3.z <= 0.0f))
+		{
+			array_push(triangleGroups[6], &i1);
+			array_push(triangleGroups[6], &i2);
+			array_push(triangleGroups[6], &i3);
+			foundGroup = true;
+		}
+		if ((p1.x <= 0.0f && p1.y <= 0.0f && p1.z >= 0.0f) &&
+			(p2.x <= 0.0f && p2.y <= 0.0f && p2.z >= 0.0f) &&
+			(p3.x <= 0.0f && p3.y <= 0.0f && p3.z >= 0.0f))
+		{
+			array_push(triangleGroups[7], &i1);
+			array_push(triangleGroups[7], &i2);
+			array_push(triangleGroups[7], &i3);
+			foundGroup = true;
+		}
+		if ((p1.x <= 0.0f && p1.y <= 0.0f && p1.z <= 0.0f) &&
+			(p2.x <= 0.0f && p2.y <= 0.0f && p2.z <= 0.0f) &&
+			(p3.x <= 0.0f && p3.y <= 0.0f && p3.z <= 0.0f))
+		{
+			array_push(triangleGroups[8], &i1);
+			array_push(triangleGroups[8], &i2);
+			array_push(triangleGroups[8], &i3);
+			foundGroup = true;
+		}
+		if (!foundGroup) {
+			array_push(triangleGroups[1], &i1);
+			array_push(triangleGroups[1], &i2);
+			array_push(triangleGroups[1], &i3);
+			array_push(triangleGroups[2], &i1);
+			array_push(triangleGroups[2], &i2);
+			array_push(triangleGroups[2], &i3);
+			array_push(triangleGroups[3], &i1);
+			array_push(triangleGroups[3], &i2);
+			array_push(triangleGroups[3], &i3);
+			array_push(triangleGroups[4], &i1);
+			array_push(triangleGroups[4], &i2);
+			array_push(triangleGroups[4], &i3);
+			array_push(triangleGroups[5], &i1);
+			array_push(triangleGroups[5], &i2);
+			array_push(triangleGroups[5], &i3);
+			array_push(triangleGroups[6], &i1);
+			array_push(triangleGroups[6], &i2);
+			array_push(triangleGroups[6], &i3);
+			array_push(triangleGroups[7], &i1);
+			array_push(triangleGroups[7], &i2);
+			array_push(triangleGroups[7], &i3);
+			array_push(triangleGroups[8], &i1);
+			array_push(triangleGroups[8], &i2);
+			array_push(triangleGroups[8], &i3);
+		}
+	}
+}
+
+// Samples the parametrized sphere and generates a geometry image accordingly
+static void sphericalParametrizationToGeometryImage(GeometryImage* outGim, u32 gimSize, u32* triangleGroups[9],
+	Vertex* vertices, Vec3* parametrizedVertices)
+{
+	// must be greater than 1 and odd
+	assert(gimSize > 1 && gimSize % 2 == 1);
 
 	Vec3* gimData = calloc(1, sizeof(Vec3) * gimSize * gimSize);
-	Vec3 pixelColor;
+	Vec3 pixelColor, pointInSpace;
 	for (u32 y = 0; y < gimSize; ++y)
 	{
 		printf("Geometry Image Sampling: Running iteration %d/%d...\n", y + 1, gimSize);
@@ -253,154 +382,165 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 		{
 			r32 yNormalized = scaleToRange(x, 0, gimSize - 1, -1.0f, 1.0f);// + (2.0f / gimSize) * 0.5f;
 			r32 xNormalized = scaleToRange(y, 0, gimSize - 1, -1.0f, 1.0f);// + (2.0f / gimSize) * 0.5f;
+			u32* selectedTriangleGroup = NULL;
 
 			if (yNormalized >= 0.0f && xNormalized >= 0.0f)
 			{
 				if (xNormalized + yNormalized >= 1.0f)
 				{
-					// TOP-RIGHT BLUE
+					// TOP-RIGHT BLUE (2)
 					Vec3 barycentricCoordinates = convertToBarycentricCoordinates2D(
 						(Vec2){0.0f, 1.0f},
 						(Vec2){1.0f, 0.0f},
 						(Vec2){1.0f, 1.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){0.0f, 1.0f, 0.0f},
 						(Vec3){1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, -1.0f},
 						barycentricCoordinates);
-
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
+					
+					selectedTriangleGroup = triangleGroups[2];
 				}
 				else
 				{
-					// TOP-RIGHT RED
+					// TOP-RIGHT RED (1)
 					Vec3 barycentricCoordinates = convertToBarycentricCoordinates2D(
 						(Vec2){1.0f, 0.0f},
 						(Vec2){0.0f, 1.0f},
 						(Vec2){0.0f, 0.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, 1.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, 1.0f},
 						barycentricCoordinates);
 
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
+					selectedTriangleGroup = triangleGroups[1];
 				}
 			}
 			else if (yNormalized >= 0.0f && xNormalized <= 0.0f)
 			{
 				if (yNormalized >= xNormalized + 1.0f)
 				{
-					// TOP-LEFT ORANGE
+					// TOP-LEFT ORANGE (6)
 					Vec3 barycentricCoordinates = convertToBarycentricCoordinates2D(
 						(Vec2){0.0f, 1.0f},
 						(Vec2){-1.0f, 0.0f},
 						(Vec2){-1.0f, 1.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){0.0f, 1.0f, 0.0f},
 						(Vec3){-1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, -1.0f},
 						barycentricCoordinates);
 
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
+					selectedTriangleGroup = triangleGroups[6];
 				}
 				else
 				{
-					// TOP-LEFT GREEN
+					// TOP-LEFT GREEN (5)
 					Vec3 barycentricCoordinates = convertToBarycentricCoordinates2D(
 						(Vec2){-1.0f, 0.0f},
 						(Vec2){0.0f, 1.0f},
 						(Vec2){0.0f, 0.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){-1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, 1.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, 1.0f},
 						barycentricCoordinates);
 
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
+					selectedTriangleGroup = triangleGroups[5];
 				}
 			}
 			else if (yNormalized <= 0.0f && xNormalized >= 0.0f)
 			{
 				if (yNormalized + 1.0f >= xNormalized)
 				{
-					// BOTTOM-RIGHT ORANGE
+					// BOTTOM-RIGHT ORANGE (3)
 					Vec3 barycentricCoordinates = convertToBarycentricCoordinates2D(
 						(Vec2){1.0f, 0.0f},
 						(Vec2){0.0f, -1.0f},
 						(Vec2){0.0f, 0.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, -1.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, 1.0f},
 						barycentricCoordinates);
 
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
+					selectedTriangleGroup = triangleGroups[3];
 				}
 				else
 				{
-					// BOTTOM-RIGHT GREEN
+					// BOTTOM-RIGHT GREEN (4)
 					Vec3 barycentricCoordinates = convertToBarycentricCoordinates2D(
 						(Vec2){0.0f, -1.0f},
 						(Vec2){1.0f, 0.0f},
 						(Vec2){1.0f, -1.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){0.0f, -1.0f, 0.0f},
 						(Vec3){1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, -1.0f},
 						barycentricCoordinates);
 
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
+					selectedTriangleGroup = triangleGroups[4];
 				}
 			}
 			else if (yNormalized <= 0.0f && xNormalized <= 0.0f)
 			{
 				if (xNormalized + yNormalized >= -1.0f)
 				{
-					// BOTTOM-LEFT BLUE
+					// BOTTOM-LEFT BLUE (7)
 					Vec3 barycentricCoordinates = convertToBarycentricCoordinates2D(
 						(Vec2){-1.0f, 0.0f},
 						(Vec2){0.0f, -1.0f},
 						(Vec2){0.0f, 0.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){-1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, -1.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, 1.0f},
 						barycentricCoordinates);
 
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
+					selectedTriangleGroup = triangleGroups[7];
 				}
 				else
 				{
-					// BOTTOM-LEFT RED
+					// BOTTOM-LEFT RED (8)
 					Vec3 barycentricCoordinates = convertToBarycentricCoordinates2D(
 						(Vec2){0.0f, -1.0f},
 						(Vec2){-1.0f, 0.0f},
 						(Vec2){-1.0f, -1.0f},
 						(Vec2){xNormalized, yNormalized});
 
-					Vec3 pointInSpace = convertFromBarycentricToEuler3D(
+					pointInSpace = convertFromBarycentricToEuler3D(
 						(Vec3){0.0f, -1.0f, 0.0f},
 						(Vec3){-1.0f, 0.0f, 0.0f},
 						(Vec3){0.0f, 0.0f, -1.0f},
 						barycentricCoordinates);
 
-					assert(getGimPixelBySamplingMesh(verticesTmp, vertices, indexes, pointInSpace, &pixelColor));
+					selectedTriangleGroup = triangleGroups[8];
 				}
+			}
+
+			assert(selectedTriangleGroup != NULL);
+
+			if (!getGimPixelBySamplingMesh(parametrizedVertices, vertices, selectedTriangleGroup, pointInSpace, &pixelColor)) {
+				printf("Could not sample spherical parametrization (does your mesh have holes?)\n");
+
+				// @TODO: What to do when we have a hole in the mesh?
+				// For now, let's keep the same color as the previous pixel... this way we may visually 'hide' the holes
+				pixelColor = pixelColor;
 			}
 
 			// Here, if we are dealing with a border pixel, we manually copy it to all its matches.
@@ -423,23 +563,35 @@ extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* out
 	fid.height = gimSize;
 	fid.width = gimSize;
 
+	outGim->indexes = NULL;
+	outGim->vertices = NULL;
+	outGim->normals = NULL;
+	outGim->img = fid;
+}
+
+extern int paramObjToGeometryImage(u32* indexes, Vertex* vertices, const s8* outPath, s32 numberOfIterations, s32 gimSize)
+{
 	GeometryImage gim;
-	gim.img = fid;
+	u32* triangleGroups[9];
+	assert(array_get_length(indexes) % 3 == 0);
+	
+	Vec3* parametrizedVertices = performSphericalParametrization(vertices, indexes, numberOfIterations);
+	separateTriangleGroups(indexes, parametrizedVertices, triangleGroups);
+
+	sphericalParametrizationToGeometryImage(&gim, gimSize, triangleGroups, vertices, parametrizedVertices);
 
 	// @TEMPORARY
 	gimNormalizeAndSave(&gim, "./res/result.bmp");
-
 	gimExportToGimFile(&gim, outPath);
+	gimFreeGeometryImage(&gim);
 
-	free(gimData);
-
-#if 0
-	for (u32 i = 0; i < numberOfVertices; ++i) {
-		vertices[i].position = (Vec4){verticesTmp[i].x, verticesTmp[i].y, verticesTmp[i].z, 1.0f};
+#if 1
+	for (u32 i = 0; i < array_get_length(vertices); ++i) {
+		vertices[i].position = (Vec4){parametrizedVertices[i].x, parametrizedVertices[i].y, parametrizedVertices[i].z, 1.0f};
 	}
 #endif
 
-	array_release(verticesTmp);
+	array_release(parametrizedVertices);
 
 	return 0;
 }
