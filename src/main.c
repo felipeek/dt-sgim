@@ -158,7 +158,11 @@ static s32 parseArguments(s32 argc, s8** argv)
 				fprintf(stderr, "-g requires an argument\n");
 				return -1;
 			}
-			if (validOptionSelected) return -1;
+			if (validOptionSelected)
+			{
+				fprintf(stderr, "Invalid set of arguments\n");
+				return -1;
+			}
 			validOptionSelected = true;
 			gimPath = argv[i++ + 1];
 		}
@@ -169,7 +173,11 @@ static s32 parseArguments(s32 argc, s8** argv)
 				fprintf(stderr, "-o requires an argument\n");
 				return -1;
 			}
-			if (validOptionSelected) return -1;
+			if (validOptionSelected)
+			{
+				fprintf(stderr, "Invalid set of arguments\n");
+				return -1;
+			}
 			validOptionSelected = true;
 			convertObjToGeometryImage = true;
 			objPath = argv[i++ + 1];
@@ -252,14 +260,13 @@ static s32 parseArguments(s32 argc, s8** argv)
 
 extern s32 main(s32 argc, s8** argv)
 {
-    r32 deltaTime = 0.0f;
-
-	mainWindow = initGlfw();
-	initGlew();
-
 	s32 ret;
 	if ((ret = parseArguments(argc, argv)) != 1)
 		return ret;
+
+    r32 deltaTime = 0.0f;
+	mainWindow = initGlfw();
+	initGlew();
 
 	if (coreInit(gimPath))
 		return -1;
