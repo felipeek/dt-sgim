@@ -186,6 +186,10 @@ extern Mesh gimGeometryImageToMesh(const GeometryImage* gim, Vec4 color)
 extern void gimExportToObjFile(const GeometryImage* gim, const s8* objPath)
 {
 	FILE *fp = fopen(objPath, "w+");
+	if (fp == NULL) {
+		printf("Error exporting to obj file: could not open file for writing. Please create res/ directory in your WD.\n");
+		return;
+	}
 	size_t verticesSize = array_get_length(gim->vertices);
 	size_t indexesSize = array_get_length(gim->indexes);
 

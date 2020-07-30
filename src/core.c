@@ -112,6 +112,11 @@ static void exportPointCloudCallback()
 	gimExportToPointCloudFile(&filteredGim, "./res/point_cloud.txt");
 }
 
+static void exportGimCallback()
+{
+	gimExportToGimFile(&filteredGim, "./res/output.gim");
+}
+
 static void registerMenuCallbacks()
 {
 	menuRegisterFilterCallBack(filterCurvatureCallback);
@@ -122,6 +127,7 @@ static void registerMenuCallbacks()
 	menuRegisterNoiseGeneratorCallBack(noiseGeneratorCallback);
 	menuRegisterExportWavefrontCallBack(exportWavefrontCallback);
 	menuRegisterExportPointCloudCallBack(exportPointCloudCallback);
+	menuRegisterExportGimCallBack(exportGimCallback);
 }
 
 static PerspectiveCamera createCamera()

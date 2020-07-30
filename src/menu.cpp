@@ -22,6 +22,7 @@ typedef void (*TextureChangeCustomCallback)(char*);
 typedef void (*NoiseGeneratorCallback)(r32);
 typedef void (*ExportWavefrontCallback)();
 typedef void (*ExportPointCloudCallback)();
+typedef void (*ExportGimCallback)();
 
 static FilterCallback filterCallback;
 static TextureChangeSolidCallback textureChangeSolidCallback;
@@ -31,6 +32,7 @@ static TextureChangeCustomCallback textureChangeCustomCallback;
 static NoiseGeneratorCallback noiseGeneratorCallback;
 static ExportWavefrontCallback exportWavefrontCallback;
 static ExportPointCloudCallback exportPointCloudCallback;
+static ExportGimCallback exportGimCallback;
 
 static char** availableCustomTexturesPaths;
 
@@ -72,6 +74,11 @@ extern "C" void menuRegisterExportWavefrontCallBack(ExportWavefrontCallback f)
 extern "C" void menuRegisterExportPointCloudCallBack(ExportPointCloudCallback f)
 {
     exportPointCloudCallback = f;
+}
+
+extern "C" void menuRegisterExportGimCallBack(ExportGimCallback f)
+{
+    exportGimCallback = f;
 }
 
 extern "C" void menuCharClickProcess(GLFWwindow* window, u32 c)
@@ -229,6 +236,12 @@ static void drawMainWindow()
         {
             if (exportPointCloudCallback)
                 exportPointCloudCallback();
+        }
+
+        if (ImGui::Button("Export to gim file (.gim)##export"))
+        {
+            if (exportGimCallback)
+                exportGimCallback();
         }
     }
 
