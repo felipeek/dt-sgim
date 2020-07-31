@@ -14,9 +14,9 @@
 #define GLSL_VERSION "#version 330"
 #define MENU_TITLE "gimmesh"
 
-typedef void (*FilterCallback)(r32, r32, s32, r32);
+typedef void (*FilterCallback)(r32, r32, s32);
 typedef void (*TextureChangeSolidCallback)();
-typedef void (*TextureChangeCurvatureCallback)(r32, r32, r32);
+typedef void (*TextureChangeCurvatureCallback)(r32, r32);
 typedef void (*TextureChangeNormalsCallback)(r32);
 typedef void (*TextureChangeCustomCallback)(char*);
 typedef void (*NoiseGeneratorCallback)(r32);
@@ -141,7 +141,6 @@ static void drawMainWindow()
     static r32 filterSpatialFactor = 0.99f;//100.0f;
     static r32 filterRangeFactor = 2.0;
     static s32 filterNumberOfIterations = 3;
-    static r32 filterBlurSpatialFactor = 0.9f;
     static s32 filterBlurNumberOfIterations = 3;
     
     static r32 noiseIntensity = 0.0f;
@@ -162,13 +161,10 @@ static void drawMainWindow()
         ImGui::DragFloat("Range Factor##curvature", &filterRangeFactor, 0.002f, 0.0f, 2.0f, "%.3f");
         ImGui::DragInt("Number of Iterations##curvature", &filterNumberOfIterations, 0.02f, 1, 10);
 
-		ImGui::DragFloat("Normals Blur Spatial Factor##curvature", &filterBlurSpatialFactor, 0.1f, 0.0f, 100.0f);
-
         if (ImGui::Button("Filter##curvature"))
         {
             if (filterCallback)
-                filterCallback(filterSpatialFactor, filterRangeFactor, filterNumberOfIterations,
-                    filterBlurSpatialFactor);
+                filterCallback(filterSpatialFactor, filterRangeFactor, filterNumberOfIterations);
         }
     }
     
@@ -207,12 +203,12 @@ static void drawMainWindow()
                 case 1:
                 {
                     if (textureChangeCurvatureCallback)
-                        textureChangeCurvatureCallback(filterSpatialFactor, filterRangeFactor, filterBlurSpatialFactor);
+                        textureChangeCurvatureCallback(filterSpatialFactor, filterRangeFactor);
                 } break;
                 case 2:
                 {
                     if (textureChangeNormalsCallback)
-                        textureChangeNormalsCallback(filterBlurSpatialFactor);
+                        textureChangeNormalsCallback(filterRangeFactor);
                 } break;
 				case 3:
 				{

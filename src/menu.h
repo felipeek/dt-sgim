@@ -3,9 +3,9 @@
 #include <GLFW/glfw3.h>
 #include "common.h"
 
-typedef void (*FilterCallback)(r32, r32, s32, r32);
+typedef void (*FilterCallback)(r32, r32, s32);
 typedef void (*TextureChangeSolidCallback)();
-typedef void (*TextureChangeCurvatureCallback)(r32, r32, r32);
+typedef void (*TextureChangeCurvatureCallback)(r32, r32);
 typedef void (*TextureChangeNormalsCallback)(r32);
 typedef void (*TextureChangeCustomCallback)(char*);
 typedef void (*NoiseGeneratorCallback)(r32);
