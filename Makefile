@@ -19,7 +19,7 @@ endif
 _DEPS = camera.h common.h core.h domain_transform.h filter.h gim.h graphics_math.h graphics.h menu.h obj.h parametrization.h util.h
 DEPS = $(patsubst %,$(SRCDIR)/%,$(_DEPS))
 
-_OBJ = camera.o core.o domain_transform.o filter.o gim.o graphics_math.o graphics.o main.o menu.o obj.o parametrization.o util.o
+_OBJ = graphics.o camera.o core.o domain_transform.o filter.o gim.o graphics_math.o main.o menu.o obj.o parametrization.o util.o
 OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
 
 _VENDOR = imgui.o imgui_demo.o imgui_draw.o imgui_impl_glfw.o imgui_impl_opengl3.o imgui_widgets.o
