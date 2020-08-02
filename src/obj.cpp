@@ -49,13 +49,13 @@ extern "C" int objParse(const char* objPath, Vertex** vertices, u32** indexes)
 	}
 
 	// If normals were provided... fill them
-	for (size_t f = 0; f < attrib.normals.size(); f += 3) {
-		Vertex* v = &(*vertices)[f / 3];
-		v->normal.x = attrib.normals[f];
-		v->normal.y = attrib.normals[f + 1];
-		v->normal.z = attrib.normals[f + 2];
-		v->normal.w = 0.0f;
-	}
+	//for (size_t f = 0; f < attrib.normals.size(); f += 3) {
+	//	Vertex* v = &(*vertices)[f / 3];
+	//	v->normal.x = attrib.normals[f];
+	//	v->normal.y = attrib.normals[f + 1];
+	//	v->normal.z = attrib.normals[f + 2];
+	//	v->normal.w = 0.0f;
+	//}
 
 	// If texCoords were provided... fill them
 	for (size_t f = 0; f < attrib.texcoords.size(); f += 2) {

@@ -3,6 +3,7 @@
 #include <math.h>
 #include <assert.h>
 #include <stdio.h>
+#include "hash_map.h"
 
 static Vec3 convertToBarycentricCoordinates3D(Vec3 a, Vec3 b, Vec3 c, Vec3 p)
 {
@@ -112,6 +113,18 @@ static Vec3 convertFromBarycentricToEuler3D(Vec3 a, Vec3 b, Vec3 c, Vec3 barycen
 	return result;
 }
 
+static int key_compare(const void *key1, const void *key2)
+{
+	u64 u1 = *(u64*)key1;
+	u64 u2 = *(u64*)key2;
+	return u1 == u2;
+}
+
+unsigned int key_hash(const void *key)
+{
+	return (u32)*(u64*)key;
+}
+
 // Parametrizes the received mesh into a sphere and return the new set of vertices
 static Vec3* performSphericalParametrization(const Vertex* vertices, u32* indexes, u32 numberOfIterations)
 {
@@ -121,7 +134,7 @@ static Vec3* performSphericalParametrization(const Vertex* vertices, u32* indexe
 	DiscreteVec2* aux;
 
 	// E = [faces([1 2],:) faces([2 3],:) faces([3 1],:)];
-	for (size_t i = 0; i < numberOfFaces; ++i)
+	for (u32 i = 0; i < numberOfFaces; ++i)
 	{
 		DiscreteVec2 v;
 		v = (DiscreteVec2){indexes[i * 3 + 0], indexes[i * 3 + 1]};
@@ -143,23 +156,37 @@ static Vec3* performSphericalParametrization(const Vertex* vertices, u32* indexe
 	}
 
 	// W = make_sparse( E(1,:), E(2,:), ones(size(E,2),1) );
-	u32* W = calloc(sizeof(s32), numberOfVertices * numberOfVertices);
+	Hash_Map W;
+	hash_map_create(&W, 1024, sizeof(u64), sizeof(u32), key_compare, key_hash);
+	//u32* W = calloc(sizeof(s32), numberOfVertices * numberOfVertices);
 	for (u32 i = 0; i < array_get_length(E); ++i)
 	{
 		DiscreteVec2 current = E[i];
-		W[current.y * numberOfVertices + current.x] = 1;
+		u64 key = current.y * (u64)numberOfVertices + current.x;
+		u32 value = 1;
+		assert(hash_map_put(&W, &key, &value) == 0);
+		//W[current.y * numberOfVertices + current.x] = 1;
 	}
 
 	array_release(E);
 
 	// d = full( sum(W,1) );
-	u32* d = array_create(u32, numberOfVertices);
+	u64* d = array_create(u64, numberOfVertices);
 	for (u32 i = 0; i < numberOfVertices; ++i)
 	{
-		u32 currentSum = 0;
+		u64 currentSum = 0;
+		if (i % 1000 == 0) {
+			printf("It %u/%u\n", i, numberOfVertices);
+		}
 		for (u32 j = 0; j < numberOfVertices; ++j)
-			if (W[i * numberOfVertices + j] == 1)
+		{
+			u64 key = i * (u64)numberOfVertices + j;
+			u32 value;
+			if (hash_map_get(&W, &key, &value) == 0 && value == 1)
+			{
 				++currentSum;
+			}
+		}
 		array_push(d, &currentSum);
 	}
 
@@ -168,15 +195,19 @@ static Vec3* performSphericalParametrization(const Vertex* vertices, u32* indexe
 	DiscreteVec2* tWIndexes = array_create(DiscreteVec2, 1000);
 	for (u32 i = 0; i < numberOfVertices; ++i)
 		for (u32 j = 0; j < numberOfVertices; ++j)
-			if (W[i * numberOfVertices + j] == 1) {
+		{
+			u64 key = i * (u64)numberOfVertices + j;
+			u32 value;
+			if (hash_map_get(&W, &key, &value) == 0 && value == 1) {
 				DiscreteVec2 pos = (DiscreteVec2){i, j};
 				r32 v = 1.0f / d[i];
 				array_push(tWIndexes, &pos);
 				array_push(tW, &v);
 			}
+		}
 
 	array_release(d);
-	free(W);
+	hash_map_destroy(&W);
 	/*
 		Perform Smoothing and Projection
 	*/
