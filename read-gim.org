@@ -1,0 +1,85 @@
+#+BEGIN_SRC jupyter-julia
+using Pkg
+Pkg.activate("./juliadeps/46f4f6fa-a20d-11ea-19f5-bb6450b41198")
+Pkg.instantiate()
+#+END_SRC
+
+#+BEGIN_SRC jupyter-julia  
+using Images
+using PyPlot
+#+END_SRC
+
+#+BEGIN_SRC jupyter-julia  
+PyPlot.rc("figure", figsize=(8,4))
+PyPlot.rc("axes", grid=true)
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC jupyter-julia  
+function mapchannels(f, gim)
+    mapslices(channelview(gim); dims = (2,3)) do channel
+        f(channel)
+    end |> x -> colorview(base_color_type(eltype(gim)), x)
+end
+#+END_SRC
+
+#+RESULTS:
+: mapchannels (generic function with 1 method)
+
+#+BEGIN_SRC jupyter-julia  
+function adjustchannels(gim)
+    mapchannels(gim) do channel
+        adjust_histogram(channel, LinearStretching())
+    end
+end
+#+END_SRC
+
+#+RESULTS:
+: adjustchannels (generic function with 1 method)
+
+#+begin_src jupyter-julia
+function loadgim(filename)
+    open(filename, "r") do io
+        w = read(io, Int32)
+        h = read(io, Int32)
+        c = 3
+        data = Array{Float32}(undef, c, h, w)
+        read!(io, data)
+        return colorview(RGB, data)
+    end
+end
+#+end_src
+
+#+RESULTS:
+: loadgim (generic function with 1 method)
+
+
+#+BEGIN_SRC jupyter-julia  
+function plotchannels(v :: Vector{C}) where C <: Color3
+    plot(comp1.(v), color = :C3)
+    plot(comp2.(v), color = :C2)
+    plot(comp3.(v), color = :C0)
+end
+#+END_SRC
+
+#+RESULTS:
+: plotchannels (generic function with 1 method)
+
+#+begin_src jupyter-julia
+gim1 = loadgim("sgims/bunny.gim")
+gim2 = loadgim("res/object.gim")
+figure()
+plotchannels(gim1[200,:])
+figure()
+plotchannels(gim2[200,:])
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+[[file:./ob-jupyter/72a648b2bbe8760af96b7878146dd34387c38f1c.png]]
+[[file:./ob-jupyter/4f2e661efde6c651574519b533d406c18f690dce.png]]
+: 1-element Array{PyCall.PyObject,1}:
+:  PyObject <matplotlib.lines.Line2D object at 0x7f1033570e10>
+:END:
+

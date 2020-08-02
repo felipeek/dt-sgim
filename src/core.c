@@ -15,7 +15,7 @@
 static GeometryImage originalGim, noisyGim, filteredGim;
 static Entity gimEntity;
 static Shader phongShader;
-static PerspectiveCamera camera;
+PerspectiveCamera camera;
 static Light* lights;
 
 static void updateFilteredGimMesh()
@@ -108,7 +108,8 @@ static void exportWavefrontCallback()
 
 static void exportPointCloudCallback()
 {
-	gimExportToPointCloudFile(&filteredGim, "./res/point_cloud.txt");
+	/* gimExportToPointCloudFile(&filteredGim, "./res/point_cloud.txt"); */
+    gimExportToGimFile(&filteredGim, "./res/object.gim");
 }
 
 static void exportGimCallback()
@@ -149,31 +150,31 @@ static Light* createLights()
 
 	Vec4 lightPosition = (Vec4) {100.0f, 0.0f, 0.0f, 1.0f};
 	Vec4 ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
-	Vec4 diffuseColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
+	Vec4 diffuseColor = (Vec4) {0.8f, 0.8f, 0.8f, 1.0f};
 	Vec4 specularColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
 	graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
 	array_push(lights, &light);
 
-	lightPosition = (Vec4) {-1.0f, 0.0f, 0.0f, 1.0f};
-	ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
-	diffuseColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
-	specularColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
-	//graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
-	array_push(lights, &light);
+	/* lightPosition = (Vec4) {-1.0f, 0.0f, 0.0f, 1.0f}; */
+	/* ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f}; */
+	/* diffuseColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f}; */
+	/* specularColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f}; */
+	/* graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor); */
+	/* array_push(lights, &light); */
 
-	lightPosition = (Vec4) {0.0f, 0.0f, 1.0f, 1.0f};
-	ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
-	diffuseColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
-	specularColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
-	//graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
-	array_push(lights, &light);
+	/* lightPosition = (Vec4) {0.0f, 0.0f, 1.0f, 1.0f}; */
+	/* ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f}; */
+	/* diffuseColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f}; */
+	/* specularColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f}; */
+	/* graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor); */
+	/* array_push(lights, &light); */
 
-	lightPosition = (Vec4) {0.0f, 0.0f, -1.0f, 1.0f};
-	ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
-	diffuseColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
-	specularColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
-	//graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
-	array_push(lights, &light);
+	/* lightPosition = (Vec4) {0.0f, 0.0f, -1.0f, 1.0f}; */
+	/* ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f}; */
+	/* diffuseColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f}; */
+	/* specularColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f}; */
+	/* graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor); */
+	/* array_push(lights, &light); */
 	return lights;
 }
 
@@ -299,6 +300,10 @@ extern void coreInputProcess(boolean* keyState, r32 deltaTime)
 	if (keyState[GLFW_KEY_L])
 	{
 		static boolean wireframe = false;
+
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glFrontFace(GL_CCW);
 
 		if (wireframe)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
