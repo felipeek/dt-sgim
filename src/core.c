@@ -24,24 +24,23 @@ static void updateFilteredGimMesh()
 	graphicsEntityMeshReplace(&gimEntity, m, false, false);
 }
 
-static void filterCurvatureCallback(r32 ss, r32 sr, s32 n, r32 blurSS)
+static float getNormalsBlurSSFromSr(r32 sr)
 {
-	// Fill blur information
-	BlurNormalsInformation blurNormalsInformation = {0};
-	blurNormalsInformation.shouldBlur = true;
-
-	blurNormalsInformation.blurSS = blurSS;
-
-	// @TEMPORARY
-	// Fix blurSS value depending on SR
 	// Tests:
 	// 10.0f = Excelent curvature preservation and very bad mesh preservation
 	// 30.0f = Good curvature preservation and bad mesh preservation
 	// 50.0f = Regular curvature preservation and regular mesh preservation
 	// 70.0f+ = Bad curvature preservation and good mesh preservation
 	r32 variance = 30.0f * sr;
-	blurNormalsInformation.blurSS = expf(-sqrtf(2.0f) / variance);
-	//printf("normalsBlurSS: %.4f\n", blurInformation.normalsBlurSS);
+	return expf(-sqrtf(2.0f) / variance);
+}
+
+static void filterCurvatureCallback(r32 ss, r32 sr, s32 n)
+{
+	// Fill blur information
+	BlurNormalsInformation blurNormalsInformation = {0};
+	blurNormalsInformation.shouldBlur = true;
+	blurNormalsInformation.blurSS = getNormalsBlurSSFromSr(sr);
 
 	gimFreeGeometryImage(&filteredGim);
 	filteredGim = filterGeometryImageFilter(&noisyGim, n, ss, sr, CURVATURE_FILTER, &blurNormalsInformation, true);
@@ -54,13 +53,12 @@ static void textureChangeSolidCallback()
 	graphicsMeshChangeColor(&gimEntity.mesh, GIM_ENTITY_COLOR, false);
 }
 
-static void textureChangeCurvatureCallback(r32 curvatureSpatialFactor, r32 curvatureRangeFactor, r32 normalsBlurSpatialFactor)
+static void textureChangeCurvatureCallback(r32 curvatureSpatialFactor, r32 curvatureRangeFactor)
 {
 	// Fill blur information
 	BlurNormalsInformation blurNormalsInformation = {0};
 	blurNormalsInformation.shouldBlur = true;
-
-	blurNormalsInformation.blurSS = normalsBlurSpatialFactor;
+	blurNormalsInformation.blurSS = getNormalsBlurSSFromSr(curvatureRangeFactor);
 
 	FloatImageData curvatureImage = dtGenerateDomainTransformsImage(&noisyGim, curvatureSpatialFactor, curvatureRangeFactor, &blurNormalsInformation);
 	FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
@@ -72,8 +70,9 @@ static void textureChangeCurvatureCallback(r32 curvatureSpatialFactor, r32 curva
 	if (currentTexture != -1) graphicsMeshChangeDiffuseMap(&gimEntity.mesh, currentTexture, true);
 }
 
-static void textureChangeNormalsCallback(r32 normalsBlurSpatialFactor)
+static void textureChangeNormalsCallback(r32 curvatureRangeFactor)
 {
+	r32 normalsBlurSpatialFactor = getNormalsBlurSSFromSr(curvatureRangeFactor);
 	FloatImageData curvatureImage = dtGenerateNormalImage(&noisyGim, true, normalsBlurSpatialFactor);
 	FloatImageData normalizedCurvatureImage = gimNormalizeImageForVisualization(&curvatureImage);
 	graphicsFloatImageSave("./res/normals.bmp", &normalizedCurvatureImage);
@@ -113,6 +112,11 @@ static void exportPointCloudCallback()
     gimExportToGimFile(&filteredGim, "./res/object.gim");
 }
 
+static void exportGimCallback()
+{
+	gimExportToGimFile(&filteredGim, "./res/output.gim");
+}
+
 static void registerMenuCallbacks()
 {
 	menuRegisterFilterCallBack(filterCurvatureCallback);
@@ -123,6 +127,7 @@ static void registerMenuCallbacks()
 	menuRegisterNoiseGeneratorCallBack(noiseGeneratorCallback);
 	menuRegisterExportWavefrontCallBack(exportWavefrontCallback);
 	menuRegisterExportPointCloudCallBack(exportPointCloudCallback);
+	menuRegisterExportGimCallBack(exportGimCallback);
 }
 
 static PerspectiveCamera createCamera()
