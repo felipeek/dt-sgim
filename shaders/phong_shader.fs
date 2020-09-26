@@ -77,7 +77,7 @@ vec3 getPointColorOfLight(Light light)
 	vec4 pointAmbientColor = light.ambientColor * realDiffuseColor;
 
 	// Diffuse Color
-	float pointDiffuseContribution = max(0, dot(fragmentToPointLightVec, normal));
+	float pointDiffuseContribution = abs(dot(fragmentToPointLightVec, normal));
 	vec4 pointDiffuseColor = pointDiffuseContribution * light.diffuseColor * realDiffuseColor;
 	
 	// Specular Color

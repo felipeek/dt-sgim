@@ -301,9 +301,9 @@ extern void coreInputProcess(boolean* keyState, r32 deltaTime)
 	{
 		static boolean wireframe = false;
 
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
-        glFrontFace(GL_CCW);
+        /* glEnable(GL_CULL_FACE); */
+        /* glCullFace(GL_BACK); */
+        /* glFrontFace(GL_CCW); */
 
 		if (wireframe)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

@@ -1,7 +1,7 @@
 IDIR=include
 CC=gcc
 CCXX=g++
-CFLAGS=-I$(IDIR) -g
+CFLAGS=-I$(IDIR) -g -O3 -ffast-math
 
 SRCDIR=src
 OUTDIR=bin

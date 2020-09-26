@@ -155,6 +155,8 @@ static void drawMainWindow()
         return;
     }
 
+    ImGui::SetWindowFontScale(2.0);
+
     if (ImGui::CollapsingHeader("Filter"))
     {
         ImGui::DragFloat("Spatial Factor##curvature", &filterSpatialFactor, 0.1f, 0.0f, 100.0f, "%.3f");
