@@ -8,8 +8,6 @@
 #include <stb_image_write.h>
 #include <dynamic_array.h>
 
-extern PerspectiveCamera camera;
-
 extern ImageData graphicsImageLoad(const s8* imagePath)
 {
 	ImageData imageData;
@@ -242,13 +240,11 @@ static s8* buildLightUniformName(s8* buffer, s32 index, const s8* property)
 	return buffer;
 }
 
-static void lightUpdateUniforms(Light* lights, Shader shader)
+static void lightUpdateUniforms(const Light* lights, Shader shader)
 {
 	s32 numberOfLights = array_get_length(lights);
 	s8 buffer[64];
 	glUseProgram(shader);
-
-    lights[0].position = camera.position;
 
 	for (s32 i = 0; i < numberOfLights; ++i)
 	{
@@ -438,7 +434,7 @@ extern void graphicsEntityRenderBasicShader(Shader shader, const PerspectiveCame
 	glUseProgram(0);
 }
 
-extern void graphicsEntityRenderPhongShader(Shader shader, const PerspectiveCamera* camera, const Entity* entity, Light* lights)
+extern void graphicsEntityRenderPhongShader(Shader shader, const PerspectiveCamera* camera, const Entity* entity, const Light* lights)
 {
 	glUseProgram(shader);
 	lightUpdateUniforms(lights, shader);

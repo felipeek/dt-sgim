@@ -96,7 +96,6 @@ vec3 getPointColorOfLight(Light light)
 
 	vec4 pointColor = pointAmbientColor + pointDiffuseColor;// + pointSpecularColor;
 	return pointColor.xyz;
-	finalColor = vec4(pointColor.xyz, 1.0);
 }
 
 void main()

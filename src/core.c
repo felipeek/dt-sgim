@@ -10,12 +10,12 @@
 
 #define PHONG_VERTEX_SHADER_PATH "./shaders/phong_shader.vs"
 #define PHONG_FRAGMENT_SHADER_PATH "./shaders/phong_shader.fs"
-#define GIM_ENTITY_COLOR (Vec4) {1.0f, 0.6f, 0.0f, 1.0f}
+#define GIM_ENTITY_COLOR (Vec4) {1.0f, 1.0f, 1.0f, 1.0f}
 
 static GeometryImage originalGim, noisyGim, filteredGim;
 static Entity gimEntity;
 static Shader phongShader;
-PerspectiveCamera camera;
+static PerspectiveCamera camera;
 static Light* lights;
 
 static void updateFilteredGimMesh()
@@ -108,8 +108,7 @@ static void exportWavefrontCallback()
 
 static void exportPointCloudCallback()
 {
-	/* gimExportToPointCloudFile(&filteredGim, "./res/point_cloud.txt"); */
-    gimExportToGimFile(&filteredGim, "./res/object.gim");
+	gimExportToPointCloudFile(&filteredGim, "./res/point_cloud.txt");
 }
 
 static void exportGimCallback()
@@ -148,33 +147,37 @@ static Light* createLights()
 	Light light;
 	Light* lights = array_create(Light, 1);
 
-	Vec4 lightPosition = (Vec4) {100.0f, 0.0f, 0.0f, 1.0f};
+	const float LIGHT_DISTANCE = 20.0f;
+	const float LIGHT_STRENGTH = 1.0f;
+
+	Vec4 lightPosition = (Vec4) {LIGHT_DISTANCE, 0.0f, 0.0f, 1.0f};
 	Vec4 ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
-	Vec4 diffuseColor = (Vec4) {0.8f, 0.8f, 0.8f, 1.0f};
-	Vec4 specularColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f};
+	Vec4 diffuseColor = (Vec4) {LIGHT_STRENGTH, LIGHT_STRENGTH, LIGHT_STRENGTH, 1.0f};
+	Vec4 specularColor = (Vec4) {LIGHT_STRENGTH, LIGHT_STRENGTH, LIGHT_STRENGTH, 1.0f};
 	graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
 	array_push(lights, &light);
 
-	/* lightPosition = (Vec4) {-1.0f, 0.0f, 0.0f, 1.0f}; */
-	/* ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f}; */
-	/* diffuseColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f}; */
-	/* specularColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f}; */
-	/* graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor); */
-	/* array_push(lights, &light); */
+	//lightPosition = (Vec4) {-LIGHT_DISTANCE, 0.0f, 0.0f, 1.0f};
+	//ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
+	//diffuseColor = (Vec4) {LIGHT_STRENGTH, LIGHT_STRENGTH, LIGHT_STRENGTH, 1.0f};
+	//specularColor = (Vec4) {LIGHT_STRENGTH, LIGHT_STRENGTH, LIGHT_STRENGTH, 1.0f};
+	//graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
+	//array_push(lights, &light);
 
-	/* lightPosition = (Vec4) {0.0f, 0.0f, 1.0f, 1.0f}; */
-	/* ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f}; */
-	/* diffuseColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f}; */
-	/* specularColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f}; */
-	/* graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor); */
-	/* array_push(lights, &light); */
+	//lightPosition = (Vec4) {0.0f, 0.0f, LIGHT_DISTANCE, 1.0f};
+	//ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
+	//diffuseColor = (Vec4) {LIGHT_STRENGTH, LIGHT_STRENGTH, LIGHT_STRENGTH, 1.0f};
+	//specularColor = (Vec4) {LIGHT_STRENGTH, LIGHT_STRENGTH, LIGHT_STRENGTH, 1.0f};
+	//graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
+	//array_push(lights, &light);
 
-	/* lightPosition = (Vec4) {0.0f, 0.0f, -1.0f, 1.0f}; */
-	/* ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f}; */
-	/* diffuseColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f}; */
-	/* specularColor = (Vec4) {0.5f, 0.5f, 0.5f, 1.0f}; */
-	/* graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor); */
-	/* array_push(lights, &light); */
+	//lightPosition = (Vec4) {0.0f, 0.0f, -LIGHT_DISTANCE, 1.0f};
+	//ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
+	//diffuseColor = (Vec4) {LIGHT_STRENGTH, LIGHT_STRENGTH, LIGHT_STRENGTH, 1.0f};
+	//specularColor = (Vec4) {LIGHT_STRENGTH, LIGHT_STRENGTH, LIGHT_STRENGTH, 1.0f};
+	//graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
+	//array_push(lights, &light);
+
 	return lights;
 }
 
