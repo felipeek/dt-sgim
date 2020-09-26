@@ -10,7 +10,7 @@ Implementation of the DTFSGIM filter. The DTFSGIM filter acts on polygonal meshe
 
 You need the dependencies: gcc, g++, make, GLFW, GLEW, libgl, libpng-dev and zlib-dev.
 
-To compile simple run:
+To compile simply run:
 
 ```bash
 $ make
@@ -22,7 +22,7 @@ and the binary `bin/gimmesh` will be created.
 
 You need the dependencies: gcc, g++, make, GLFW, GLEW and the OpenGL framework.
 
-To compile simple run:
+To compile simply run:
 
 ```bash
 $ make
