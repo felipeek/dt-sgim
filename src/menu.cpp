@@ -12,7 +12,7 @@
 #include <GLFW/glfw3.h>
 
 #define GLSL_VERSION "#version 330"
-#define MENU_TITLE "gimmesh"
+#define MENU_TITLE "DT-SGIM Filter"
 
 typedef void (*FilterCallback)(r32, r32, s32);
 typedef void (*TextureChangeSolidCallback)();
