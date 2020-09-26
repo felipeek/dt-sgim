@@ -42,7 +42,7 @@ Note that each pixel of the image is represented by 3 channels (R, G, B), each o
 
 A set of example geometry images can be downloaded [here](https://drive.google.com/open?id=1WhLlYtdOW1U3c6WDZaM5dkaWJcE5KFs3).
 
-To open the application, simple run:
+To open the application, simply run:
 
 ```bash
 $ ./bin/gimmesh -g <example.gim>
@@ -54,7 +54,7 @@ An iterative GUI will be opened and you will be able to filter the geometry imag
 
 It is also possible to transform wavefront objects to the `.gim` format using the application.
 
-To do that, simple run:
+To do that, simply run:
 
 ```bash
 ./bin/gimmesh -o <example.obj>
