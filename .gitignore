@@ -1,5 +1,7 @@
 bin/
-res/
 .vscode/
 .vs/
 *.ini
+output.obj
+output.gim
+point_cloud.txt

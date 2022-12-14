@@ -8,17 +8,17 @@ typedef void (*ForEachFunc)(const void *key, const void* value, void* custom_dat
 
 typedef struct
 {
-    unsigned int capacity;
-    unsigned int num_elements;
-    size_t key_size;
-    size_t value_size;
-    KeyCompareFunc key_compare_func;
-    KeyHashFunc key_hash_func;
-    void *data;
+	unsigned int capacity;
+	unsigned int num_elements;
+	size_t key_size;
+	size_t value_size;
+	KeyCompareFunc key_compare_func;
+	KeyHashFunc key_hash_func;
+	void *data;
 } Hash_Map;
 
 int hash_map_create(Hash_Map *hm, unsigned int initial_capacity, size_t key_size, size_t value_size,
-                    KeyCompareFunc key_compare_func, KeyHashFunc key_hash_func);
+					KeyCompareFunc key_compare_func, KeyHashFunc key_hash_func);
 int hash_map_put(Hash_Map *hm, const void *key, const void *value);
 int hash_map_get(Hash_Map *hm, const void *key, void *value);
 int hash_map_delete(Hash_Map *hm, const void *key);

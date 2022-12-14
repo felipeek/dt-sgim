@@ -45,17 +45,17 @@ static r32 fillDomainTransform(
 	const GeometryImage* gim,
 	const Vec4* normals,
 	r32* dt,
-    DiscreteVec2 currentPixel,
-    DiscreteVec2 lastPixel,
-    DiscreteVec2 penultPixel,
+	DiscreteVec2 currentPixel,
+	DiscreteVec2 lastPixel,
+	DiscreteVec2 penultPixel,
 	r32 spatialFactor,
 	r32 rangeFactor)
 {
-    Vec3 currentPixelVal, lastPixelVal, penultPixelVal, nextPixelVal;
-    Vec4 currentNormal, lastNormal;
+	Vec3 currentPixelVal, lastPixelVal, penultPixelVal, nextPixelVal;
+	Vec4 currentNormal, lastNormal;
 	Vec3 lastTangent, currentTangent, nextTangent;
 	Vec3 lastTangentAverage, nextTangentAverage;
-    r32 curvatureValue, distanceValue, d;
+	r32 curvatureValue, distanceValue, d;
 
 	currentPixelVal = *(Vec3*)&gim->img.data[currentPixel.y * gim->img.width * gim->img.channels + currentPixel.x * gim->img.channels];
 	lastPixelVal = *(Vec3*)&gim->img.data[lastPixel.y * gim->img.width * gim->img.channels + lastPixel.x * gim->img.channels];
@@ -71,7 +71,7 @@ static r32 fillDomainTransform(
 	// Get the curvatureValue - this is the length of the difference between normals
 	d = gmLengthVec4(gmSubtractVec4(currentNormal, lastNormal));
 
-    dt[currentPixel.y * gim->img.width + currentPixel.x] = d;
+	dt[currentPixel.y * gim->img.width + currentPixel.x] = d;
 
 	// Copy border if needed
 	// If corner pixel
@@ -110,7 +110,7 @@ static r32 fillDomainTransform(
 		dt[(gim->img.height - 1) * gim->img.width + mirrorXPosition] = d;
 	}
 
-    return d;
+	return d;
 }
 
 // This function will calculate both horizontal and vertical domain transforms of geometry image 'gim'
@@ -122,8 +122,8 @@ extern DomainTransform dtGenerateDomainTransforms(
 	const BlurNormalsInformation* blurNormalsInformation)
 {
 	DomainTransform domainTransform;
-    DiscreteVec2 nextPixel, currentPixel, lastPixel, penultPixel;
-    r32 lastValue;
+	DiscreteVec2 nextPixel, currentPixel, lastPixel, penultPixel;
+	r32 lastValue;
 	// Normals are already defined inside the geometry image.
 	// However, we create this new array because they may be blurred to filter and we do not want to modify geometry image's normals
 	Vec4* normals;
@@ -136,7 +136,7 @@ extern DomainTransform dtGenerateDomainTransforms(
 	else
 		normals = gim->normals;
 
-    // HORIZONTAL STEP
+	// HORIZONTAL STEP
 	for (s32 i = 1; i < gim->img.height - 1; ++i)
 	{
 		// If central line, avoid filtering process
@@ -145,24 +145,24 @@ extern DomainTransform dtGenerateDomainTransforms(
 		// Get the mirror Y position
 		s32 mirrorYPosition = gim->img.height - 1 - i;
 
-        // Fill initial conditions
-        currentPixel = (DiscreteVec2) {0, i};
-        lastPixel = (DiscreteVec2) {1, mirrorYPosition};
-        penultPixel = (DiscreteVec2) {2, mirrorYPosition};
-        
+		// Fill initial conditions
+		currentPixel = (DiscreteVec2) {0, i};
+		lastPixel = (DiscreteVec2) {1, mirrorYPosition};
+		penultPixel = (DiscreteVec2) {2, mirrorYPosition};
+		
 		// Filter from (lBorder, i) to (rBorder, i)
 		// Note: border pixels will have their value set "two times" (one for each match, but fillDomainTransform copy the border)
 		// However, this is not a problem, since their normals must be exactly the same, because they are the same vertex
 		for (s32 j = 0; j < gim->img.width; ++j)
 		{
-            currentPixel = (DiscreteVec2) {j, i};
-            lastValue = fillDomainTransform(gim, normals, domainTransform.horizontal, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
-            penultPixel = lastPixel;
-            lastPixel = currentPixel;
+			currentPixel = (DiscreteVec2) {j, i};
+			lastValue = fillDomainTransform(gim, normals, domainTransform.horizontal, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
+			penultPixel = lastPixel;
+			lastPixel = currentPixel;
 		}
 	}
 
-    // VERTICAL STEP
+	// VERTICAL STEP
 	for (s32 j = 1; j < gim->img.width - 1; ++j)
 	{
 		// If central line, avoid filtering process
@@ -171,28 +171,28 @@ extern DomainTransform dtGenerateDomainTransforms(
 		// Get the mirror X position
 		s32 mirrorXPosition = gim->img.width - 1 - j;
 
-        // Fill initial conditions
-        currentPixel = (DiscreteVec2) {j, 0};
-        lastPixel = (DiscreteVec2) {mirrorXPosition, 1};
-        penultPixel = (DiscreteVec2) {mirrorXPosition, 2};
+		// Fill initial conditions
+		currentPixel = (DiscreteVec2) {j, 0};
+		lastPixel = (DiscreteVec2) {mirrorXPosition, 1};
+		penultPixel = (DiscreteVec2) {mirrorXPosition, 2};
 
 		// Filter from (j, tBorder) to (j, bBorder)
 		for (s32 i = 0; i < gim->img.height; ++i)
 		{
-            currentPixel = (DiscreteVec2) {j, i};
-            lastValue = fillDomainTransform(gim, normals, domainTransform.vertical, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
-            penultPixel = lastPixel;
-            lastPixel = currentPixel;
+			currentPixel = (DiscreteVec2) {j, i};
+			lastValue = fillDomainTransform(gim, normals, domainTransform.vertical, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
+			penultPixel = lastPixel;
+			lastPixel = currentPixel;
 		}
-    }
+	}
 
-    // C STEP
+	// C STEP
 	s32 halfWidth = gim->img.width / 2;
 
-    // Fill initial conditions
-    currentPixel = (DiscreteVec2) {halfWidth, 0};
-    lastPixel = (DiscreteVec2) {halfWidth + 1, 0};
-    penultPixel = (DiscreteVec2) {halfWidth + 2, 0};
+	// Fill initial conditions
+	currentPixel = (DiscreteVec2) {halfWidth, 0};
+	lastPixel = (DiscreteVec2) {halfWidth + 1, 0};
+	penultPixel = (DiscreteVec2) {halfWidth + 2, 0};
 
 	// Filter from (half, tBorder) to (half, bBorder)
 	for (s32 i = 0; i < gim->img.height; ++i)
@@ -200,10 +200,10 @@ extern DomainTransform dtGenerateDomainTransforms(
 		// If (i == 0), we want to consider the domain transform as a horizontal domain transform
 		// The last pixel will be to the right of the current pixel
 		r32* dt = (i == 0) ? domainTransform.horizontal : domainTransform.vertical;
-        currentPixel = (DiscreteVec2) {halfWidth, i};
-        lastValue = fillDomainTransform(gim, normals, dt, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
-        penultPixel = lastPixel;
-        lastPixel = currentPixel;
+		currentPixel = (DiscreteVec2) {halfWidth, i};
+		lastValue = fillDomainTransform(gim, normals, dt, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
+		penultPixel = lastPixel;
+		lastPixel = currentPixel;
 	}
 
 	// Filter from (half, bBorder) to (rBorder, bBorder)
@@ -211,10 +211,10 @@ extern DomainTransform dtGenerateDomainTransforms(
 	{
 		s32 mirrorXBorder = gim->img.width - 1 - j;
 
-        currentPixel = (DiscreteVec2) {j, gim->img.height - 1};
-        lastValue = fillDomainTransform(gim, normals, domainTransform.horizontal, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
-        penultPixel = lastPixel;
-        lastPixel = currentPixel;
+		currentPixel = (DiscreteVec2) {j, gim->img.height - 1};
+		lastValue = fillDomainTransform(gim, normals, domainTransform.horizontal, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
+		penultPixel = lastPixel;
+		lastPixel = currentPixel;
 	}
 
 	// Filter from (rBorder, tBorder) to (half, tBorder)
@@ -222,19 +222,19 @@ extern DomainTransform dtGenerateDomainTransforms(
 	{
 		s32 mirrorXBorder = gim->img.width - 1 - j;
 
-        currentPixel = (DiscreteVec2) {j, 0};
-        lastValue = fillDomainTransform(gim, normals, domainTransform.horizontal, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
-        penultPixel = lastPixel;
-        lastPixel = currentPixel;
+		currentPixel = (DiscreteVec2) {j, 0};
+		lastValue = fillDomainTransform(gim, normals, domainTransform.horizontal, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
+		penultPixel = lastPixel;
+		lastPixel = currentPixel;
 	}
 
-    // PI STEP
+	// PI STEP
 	s32 halfHeight = gim->img.height / 2;
 
-    // Fill initial conditions
-    currentPixel = (DiscreteVec2) {0, halfHeight};
-    lastPixel = (DiscreteVec2) {0, halfHeight + 1};
-    penultPixel = (DiscreteVec2) {0, halfHeight + 2};
+	// Fill initial conditions
+	currentPixel = (DiscreteVec2) {0, halfHeight};
+	lastPixel = (DiscreteVec2) {0, halfHeight + 1};
+	penultPixel = (DiscreteVec2) {0, halfHeight + 2};
 
 	// Filter from (lBorder, half) to (rBorder, half)
 	for (s32 j = 0; j < gim->img.width; ++j)
@@ -242,10 +242,10 @@ extern DomainTransform dtGenerateDomainTransforms(
 		// If (j == 0), we want to consider the domain transform as a vertical domain transform
 		// The last pixel will be on the bottom of the current pixel
 		r32* dt = (j == 0) ? domainTransform.vertical : domainTransform.horizontal;
-        currentPixel = (DiscreteVec2) {j, halfHeight};
-        lastValue = fillDomainTransform(gim, normals, dt, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
-        penultPixel = lastPixel;
-        lastPixel = currentPixel;
+		currentPixel = (DiscreteVec2) {j, halfHeight};
+		lastValue = fillDomainTransform(gim, normals, dt, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
+		penultPixel = lastPixel;
+		lastPixel = currentPixel;
 	}
 
 	// Filter from (rBorder, half) to (rBorder, bBorder)
@@ -253,10 +253,10 @@ extern DomainTransform dtGenerateDomainTransforms(
 	{
 		s32 mirrorYBorder = gim->img.height - 1 - i;
 
-        currentPixel = (DiscreteVec2) {gim->img.width - 1, i};
-        lastValue = fillDomainTransform(gim, normals, domainTransform.vertical, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
-        penultPixel = lastPixel;
-        lastPixel = currentPixel;
+		currentPixel = (DiscreteVec2) {gim->img.width - 1, i};
+		lastValue = fillDomainTransform(gim, normals, domainTransform.vertical, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
+		penultPixel = lastPixel;
+		lastPixel = currentPixel;
 	}
 
 	// Filter from (lBorder, bBorder) to (lBorder, half)
@@ -264,19 +264,19 @@ extern DomainTransform dtGenerateDomainTransforms(
 	{
 		s32 mirrorYBorder = gim->img.height - 1 - i;
 
-        currentPixel = (DiscreteVec2) {0, i};
-        lastValue = fillDomainTransform(gim, normals, domainTransform.vertical, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
-        penultPixel = lastPixel;
-        lastPixel = currentPixel;
+		currentPixel = (DiscreteVec2) {0, i};
+		lastValue = fillDomainTransform(gim, normals, domainTransform.vertical, currentPixel, lastPixel, penultPixel, spatialFactor, rangeFactor);
+		penultPixel = lastPixel;
+		lastPixel = currentPixel;
 	}
 
-    // FINAL STEP
+	// FINAL STEP
 	for (s32 i = 0; i < gim->img.height; ++i)
 		for (s32 j = 0; j < gim->img.width; ++j)
 		{
 			domainTransform.horizontal[i * gim->img.width + j] = 1.0f + (spatialFactor / rangeFactor) * domainTransform.horizontal[i * gim->img.width + j];
 			domainTransform.vertical[i * gim->img.width + j] = 1.0f + (spatialFactor / rangeFactor) * domainTransform.vertical[i * gim->img.width + j];
-        }
+		}
 
 	if (blurNormalsInformation && blurNormalsInformation->shouldBlur)
 		free(normals);

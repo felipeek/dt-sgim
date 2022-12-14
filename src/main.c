@@ -17,7 +17,7 @@ GLFWwindow* mainWindow;
 static s8* gimPath;
 
 static boolean keyState[1024];	// @TODO: Check range.
-static boolean isMenuVisible = false;
+static boolean isMenuVisible = true;
 
 static void glfwKeyCallback(GLFWwindow* window, s32 key, s32 scanCode, s32 action, s32 mods)
 {
@@ -264,7 +264,7 @@ extern s32 main(s32 argc, s8** argv)
 	if ((ret = parseArguments(argc, argv)) != 1)
 		return ret;
 
-    r32 deltaTime = 0.0f;
+	r32 deltaTime = 0.0f;
 	mainWindow = initGlfw();
 	initGlew();
 

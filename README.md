@@ -2,7 +2,11 @@
 
 ## Overview
 
-Implementation of the DTFSGIM filter. The DTFSGIM filter acts on polygonal meshes represented by [Geometry Images](http://hhoppe.com/proj/gim/) obtained from [spherical parametrization](http://hhoppe.com/proj/sphereparam/). As a result, the filter provides a smoothed mesh, while keeping its important curvatures.
+Implementation of the DT-SGIM filter, published in *Domain transform for spherical geometry images* [1].
+
+The DT-SGIM filter acts on polygonal meshes represented by [Geometry Images](http://hhoppe.com/proj/gim/) obtained from [spherical parametrization](http://hhoppe.com/proj/sphereparam/). As a result, the filter provides a smoothed mesh, while keeping its important curvatures.
+
+![example1](doc/bunny-results.png)
 
 ## Compile
 
@@ -34,13 +38,12 @@ and the binary `bin/gimmesh` will be created.
 
 To use this tool, you must provide a geometry image. They are represented as `.gim` files with the following format, in order:
 
-- Image Width (4 bytes) - int
-- Image Height (4 bytes) - int
-- Image Data (Image Width * Image Height * 3 (channels) * 4 bytes) - float
+- Image Width: 4-bytes integer
+- Image Height: 4-bytes integer
+- Image Data: each pixel is represented as a 3-channel 4-byte float (RGB), totalizing 12 bytes per pixel. Total data size is (width * height * 3 (channels) * 4) bytes.
 
-Note that each pixel of the image is represented by 3 channels (R, G, B), each one represented by a floating point number of 4 bytes.
 
-A set of example geometry images can be downloaded [here](https://drive.google.com/open?id=1WhLlYtdOW1U3c6WDZaM5dkaWJcE5KFs3).
+A set of example geometry images are available in the res/ folder.
 
 To open the application, simply run:
 
@@ -69,3 +72,8 @@ You can also set the optional parameters:
 ```
 
 > Note: The parametrization used to transform meshes to geometry images still needs to be improved. Thus, the quality of the result will depend on the input mesh.
+
+
+## References
+
+- [1] https://www.sciencedirect.com/science/article/abs/pii/S0097849320301503.

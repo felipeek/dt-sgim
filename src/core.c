@@ -103,17 +103,20 @@ static void noiseGeneratorCallback(r32 intensity)
 
 static void exportWavefrontCallback()
 {
-	gimExportToObjFile(&filteredGim, "./res/output.obj");
+	gimExportToObjFile(&filteredGim, "./output.obj");
+	printf("Created ./output.obj\n");
 }
 
 static void exportPointCloudCallback()
 {
-	gimExportToPointCloudFile(&filteredGim, "./res/point_cloud.txt");
+	gimExportToPointCloudFile(&filteredGim, "./point_cloud.txt");
+	printf("Created ./point_cloud.txt\n");
 }
 
 static void exportGimCallback()
 {
-	gimExportToGimFile(&filteredGim, "./res/output.gim");
+	gimExportToGimFile(&filteredGim, "./output.gim");
+	printf("Created ./output.gim\n");
 }
 
 static void registerMenuCallbacks()
@@ -157,12 +160,12 @@ static Light* createLights()
 	graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
 	array_push(lights, &light);
 
-	//lightPosition = (Vec4) {-LIGHT_DISTANCE, 0.0f, 0.0f, 1.0f};
-	//ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
-	//diffuseColor = (Vec4) {LIGHT_STRENGTH, LIGHT_STRENGTH, LIGHT_STRENGTH, 1.0f};
-	//specularColor = (Vec4) {LIGHT_STRENGTH, LIGHT_STRENGTH, LIGHT_STRENGTH, 1.0f};
-	//graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
-	//array_push(lights, &light);
+	lightPosition = (Vec4) {-LIGHT_DISTANCE, 0.0f, 0.0f, 1.0f};
+	ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
+	diffuseColor = (Vec4) {LIGHT_STRENGTH, LIGHT_STRENGTH, LIGHT_STRENGTH, 1.0f};
+	specularColor = (Vec4) {LIGHT_STRENGTH, LIGHT_STRENGTH, LIGHT_STRENGTH, 1.0f};
+	graphicsLightCreate(&light, lightPosition, ambientColor, diffuseColor, specularColor);
+	array_push(lights, &light);
 
 	//lightPosition = (Vec4) {0.0f, 0.0f, LIGHT_DISTANCE, 1.0f};
 	//ambientColor = (Vec4) {0.1f, 0.1f, 0.1f, 1.0f};
@@ -304,9 +307,9 @@ extern void coreInputProcess(boolean* keyState, r32 deltaTime)
 	{
 		static boolean wireframe = false;
 
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
-        glFrontFace(GL_CCW);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+		glFrontFace(GL_CCW);
 
 		if (wireframe)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
